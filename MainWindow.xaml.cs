@@ -4,16 +4,32 @@ using System.Management;
 using System.Windows;
 using PowerTool.Models;  // Importar la clase Equipo
 using PowerTool.Utilities;  // Importar la clase Logger
-using System.Windows.Media;
+using SkiaSharp;
+using Svg.Skia;
+using SkiaSharp.Views.Desktop;
+using System.IO;
 using System.Windows.Controls;
 
 namespace PowerTool
 {
     public partial class MainWindow : Window
     {
+        private readonly SKSvg svgComputer;
+        private readonly SKSvg svgScript;
+        private readonly SKSvg svgRemote;
         public MainWindow()
         {
             InitializeComponent();
+
+             // Cargar los SVGs
+            svgComputer = new SKSvg();
+            svgComputer.Load(Path.Combine("icons", "computer.svg"));
+
+            svgScript = new SKSvg();
+            svgScript.Load(Path.Combine("icons", "script.svg"));
+
+            svgRemote = new SKSvg();
+            svgRemote.Load(Path.Combine("icons", "remote.svg"));
 
             // Mostrar la ventana de diálogo para introducir el dominio
             DomainWindow domainWindow = new DomainWindow();
@@ -27,6 +43,27 @@ namespace PowerTool
                 MessageBox.Show("No se ha introducido un dominio válido. La aplicación se cerrará.");
                 this.Close();
             }
+        }
+
+        private void OnPaintSurface(object sender, SKPaintSurfaceEventArgs e)
+        {
+            var canvas = e.Surface.Canvas;
+            canvas.Clear(SKColors.Transparent);
+            canvas.DrawPicture(svgComputer.Picture);
+        }
+
+        private void OnPaintSurfaceScript(object sender, SKPaintSurfaceEventArgs e)
+        {
+            var canvas = e.Surface.Canvas;
+            canvas.Clear(SKColors.Transparent);
+            canvas.DrawPicture(svgScript.Picture);
+        }
+
+        private void OnPaintSurfaceRemote(object sender, SKPaintSurfaceEventArgs e)
+        {
+            var canvas = e.Surface.Canvas;
+            canvas.Clear(SKColors.Transparent);
+            canvas.DrawPicture(svgRemote.Picture);
         }
 
         private void CargarEquiposDelDominio(string dominio)

@@ -1,0 +1,9 @@
+<svg width="16" height="16" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+  <!-- Cable -->
+  <line x1="16" y1="0" x2="16" y2="20" stroke="#000" stroke-width="2"/>
+  <!-- Conector -->
+  <rect x="12" y="20" width="8" height="6" fill="#000"/>
+  <!-- Patas del conector -->
+  <rect x="14" y="26" width="2" height="4" fill="#000"/>
+  <rect x="16" y="26" width="2" height="4" fill="#000"/>
+</svg>
