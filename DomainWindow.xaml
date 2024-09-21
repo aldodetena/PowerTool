@@ -1,0 +1,12 @@
+<Window x:Class="PowerTool.DomainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Conectar al Dominio" Height="150" Width="300">
+    <Grid>
+        <StackPanel Margin="10">
+            <TextBlock Text="Introduce el nombre del dominio:" Margin="0,0,0,10"/>
+            <TextBox Name="DomainTextBox" Width="250"/>
+            <Button Content="Conectar" Width="100" Margin="0,10,0,0" HorizontalAlignment="Center" Click="ConectarButton_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>
