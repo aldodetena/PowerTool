@@ -4,8 +4,10 @@
         xmlns:skia="clr-namespace:SkiaSharp.Views.WPF;assembly=SkiaSharp.Views.WPF"
         Title="PowerTool - Equipos del Dominio" Height="450" Width="600">
     <Grid>
+        <!-- Buscador -->
+        <TextBox Name="SearchBox" Width="550" Height="20" VerticalAlignment="Top" Margin="10,10,10,0" TextChanged="SearchBox_TextChanged"/>
         <!-- ListView para mostrar los equipos con iconos y botones -->
-        <ListView Name="EquiposListView" HorizontalAlignment="Left" Height="300" VerticalAlignment="Top" Width="550" Margin="10,10,10,100">
+        <ListView Name="EquiposListView" Height="250" VerticalAlignment="Top" Width="550" Margin="10,50,10,100">
             <ListView.View>
                 <GridView>
                     <GridViewColumn Header="Equipo" Width="200">

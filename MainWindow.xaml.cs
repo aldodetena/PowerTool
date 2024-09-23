@@ -1,4 +1,6 @@
-﻿using System.DirectoryServices;
+﻿using System.Collections.ObjectModel;
+using System.Windows.Data;
+using System.DirectoryServices;
 using System.Net.NetworkInformation;
 using System.Management;
 using System.Windows;
@@ -17,6 +19,8 @@ namespace PowerTool
         private readonly SKSvg svgComputer;
         private readonly SKSvg svgScript;
         private readonly SKSvg svgRemote;
+        private ObservableCollection<Equipo> equipos;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -30,6 +34,11 @@ namespace PowerTool
 
             svgRemote = new SKSvg();
             svgRemote.Load(Path.Combine("icons", "remote.svg"));
+
+            equipos = new ObservableCollection<Equipo>();
+            EquiposListView.ItemsSource = equipos;
+            CollectionView view = (CollectionView)CollectionViewSource.GetDefaultView(EquiposListView.ItemsSource);
+            view.Filter = EquipoFilter;
 
             // Mostrar la ventana de diálogo para introducir el dominio
             DomainWindow domainWindow = new DomainWindow();
@@ -45,6 +54,10 @@ namespace PowerTool
             }
         }
 
+        private void SearchBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        {
+            CollectionViewSource.GetDefaultView(EquiposListView.ItemsSource).Refresh();
+        }
         private void OnPaintSurface(object sender, SKPaintSurfaceEventArgs e)
         {
             var canvas = e.Surface.Canvas;
@@ -66,7 +79,15 @@ namespace PowerTool
             canvas.DrawPicture(svgRemote.Picture);
         }
 
-        private void CargarEquiposDelDominio(string dominio)
+        private bool EquipoFilter(object item)
+        {
+            if (string.IsNullOrWhiteSpace(SearchBox.Text))
+                return true;
+
+            return (item as Equipo).Name.IndexOf(SearchBox.Text, StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private async void CargarEquiposDelDominio(string dominio)
         {
             try
             {
@@ -83,29 +104,38 @@ namespace PowerTool
                 searcher.PropertiesToLoad.Add("lastLogonTimestamp");
 
                 SearchResultCollection resultados = searcher.FindAll();
-                List<Equipo> equipos = new List<Equipo>();
+                List<Task<Equipo>> tareas = new List<Task<Equipo>>();
 
                 foreach (SearchResult resultado in resultados)
                 {
-                    string? nombre = resultado.Properties["name"].Count > 0 ? resultado.Properties["name"][0].ToString() : "";
-                    string? descripcion = resultado.Properties["description"].Count > 0 ? resultado.Properties["description"][0].ToString() : "";
-                    string? sistemaOperativo = resultado.Properties["operatingSystem"].Count > 0 ? resultado.Properties["operatingSystem"][0].ToString() : "";
-                    string? versionSO = resultado.Properties["operatingSystemVersion"].Count > 0 ? resultado.Properties["operatingSystemVersion"][0].ToString() : "";
-                    DateTime lastLogon = resultado.Properties["lastLogonTimestamp"].Count > 0 ? DateTime.FromFileTime((long)resultado.Properties["lastLogonTimestamp"][0]) : DateTime.MinValue;
-
-                    equipos.Add(new Equipo
+                    tareas.Add(Task.Run(() =>
                     {
-                        Name = nombre,
-                        Description = descripcion,
-                        OperatingSystem = sistemaOperativo,
-                        OperatingSystemVersion = versionSO,
-                        LastLogonTimestamp = lastLogon,
-                        IsOnline = EstaEncendido(nombre),
-                        CurrentUser = ObtenerUsuarioActual(nombre)
-                    });
+                        string nombre = resultado.Properties["name"].Count > 0 ? resultado.Properties["name"][0].ToString() : "";
+                        string descripcion = resultado.Properties["description"].Count > 0 ? resultado.Properties["description"][0].ToString() : "";
+                        string sistemaOperativo = resultado.Properties["operatingSystem"].Count > 0 ? resultado.Properties["operatingSystem"][0].ToString() : "";
+                        string versionSO = resultado.Properties["operatingSystemVersion"].Count > 0 ? resultado.Properties["operatingSystemVersion"][0].ToString() : "";
+                        DateTime lastLogon = resultado.Properties["lastLogonTimestamp"].Count > 0 ? DateTime.FromFileTime((long)resultado.Properties["lastLogonTimestamp"][0]) : DateTime.MinValue;
+
+                        var equipo = new Equipo
+                        {
+                            Name = nombre,
+                            Description = descripcion,
+                            OperatingSystem = sistemaOperativo,
+                            OperatingSystemVersion = versionSO,
+                            LastLogonTimestamp = lastLogon,
+                            IsOnline = EstaEncendido(nombre),
+                            CurrentUser = ObtenerUsuarioActual(nombre)
+                        };
+
+                        return equipo;
+                    }));
                 }
 
-                EquiposListView.ItemsSource = equipos;
+                Equipo[] equiposCargados = await Task.WhenAll(tareas);
+                foreach (var equipo in equiposCargados)
+                {
+                    equipos.Add(equipo);
+                }
             }
             catch (Exception ex)
             {
