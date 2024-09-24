@@ -11,6 +11,7 @@ using Svg.Skia;
 using SkiaSharp.Views.Desktop;
 using System.IO;
 using System.Windows.Controls;
+using System.Windows.Media;
 
 namespace PowerTool
 {
@@ -143,18 +144,25 @@ namespace PowerTool
             }
         }
 
-        private bool EstaEncendido(string nombreEquipo)
+        private Brush EstaEncendido(string nombreEquipo)
         {
             try
             {
                 Ping ping = new Ping();
                 PingReply reply = ping.Send(nombreEquipo);
 
-                return reply.Status == IPStatus.Success;
+                if (reply.Status == IPStatus.Success)
+                {
+                    return Brushes.Green; // Devuelve verde si está encendido
+                }
+                else
+                {
+                    return Brushes.Red; // Devuelve rojo si no está encendido
+                }
             }
             catch
             {
-                return false;
+                return Brushes.Red; // Devuelve rojo si ocurre un error
             }
         }
 

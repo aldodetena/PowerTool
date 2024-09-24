@@ -1,10 +1,10 @@
 <Window x:Class="PowerTool.CommandWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Enviar Comando" Height="200" Width="400">
+        Title="Enviar Comando" Height="130" Width="400">
     <Grid>
         <TextBlock Text="Introduce el comando PowerShell:" VerticalAlignment="Top" Margin="10,10,10,0"/>
-        <TextBox Name="ComandoTextBox" VerticalAlignment="Top" Margin="10,30,10,0" Height="30"/>
+        <TextBox Name="ComandoTextBox" VerticalAlignment="Top" Margin="10,30,10,0" Height="20"/>
         <Button Content="Ejecutar" VerticalAlignment="Bottom" Margin="10,0,10,10" Click="EjecutarComando_Click"/>
     </Grid>
 </Window>
