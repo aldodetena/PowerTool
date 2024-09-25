@@ -4,7 +4,7 @@ namespace PowerTool.Utilities
 {
     public static class Logger
     {
-        private static readonly string logFilePath = "PowerToolLogs.txt";
+        private static readonly string logFilePath = "PowerToolLogs.log";
 
         public static void LogError(string message, Exception ex)
         {
