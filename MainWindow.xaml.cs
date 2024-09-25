@@ -5,7 +5,7 @@ using System.Net.NetworkInformation;
 using System.Management;
 using System.Windows;
 using PowerTool.Models;  // Importar la clase Equipo
-using PowerTool.Utilities;  // Importar la clase Logger
+using PowerTool.Utilities;  // Importar la clase Logger;
 using SkiaSharp;
 using Svg.Skia;
 using SkiaSharp.Views.Desktop;
@@ -58,34 +58,40 @@ namespace PowerTool
                 this.Close();
             }
         }
+
         private void SearchBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
         {
             CollectionViewSource.GetDefaultView(EquiposListView.ItemsSource).Refresh();
         }
+
         private void OnPaintSurface(object sender, SKPaintSurfaceEventArgs e)
         {
             var canvas = e.Surface.Canvas;
             canvas.Clear(SKColors.Transparent);
             canvas.DrawPicture(svgComputer.Picture);
         }
+
         private void OnPaintSurfaceScript(object sender, SKPaintSurfaceEventArgs e)
         {
             var canvas = e.Surface.Canvas;
             canvas.Clear(SKColors.Transparent);
             canvas.DrawPicture(svgScript.Picture);
         }
+
         private void OnPaintSurfaceRemote(object sender, SKPaintSurfaceEventArgs e)
         {
             var canvas = e.Surface.Canvas;
             canvas.Clear(SKColors.Transparent);
             canvas.DrawPicture(svgRemote.Picture);
         }
+
         private void OnPaintSurfaceFolder(object sender, SKPaintSurfaceEventArgs e)
         {
             var canvas = e.Surface.Canvas;
             canvas.Clear(SKColors.Transparent);
             canvas.DrawPicture(svgFolder.Picture);
         }
+
         private bool EquipoFilter(object item)
         {
             if (string.IsNullOrWhiteSpace(SearchBox.Text))
@@ -93,6 +99,7 @@ namespace PowerTool
 
             return (item as Equipo).Name.IndexOf(SearchBox.Text, StringComparison.OrdinalIgnoreCase) >= 0;
         }
+
         private async void CargarEquiposDelDominio(string dominio)
         {
             try
@@ -116,10 +123,10 @@ namespace PowerTool
                 {
                     tareas.Add(Task.Run(() =>
                     {
-                        string nombre = resultado.Properties["name"].Count > 0 ? resultado.Properties["name"][0].ToString() : "";
-                        string descripcion = resultado.Properties["description"].Count > 0 ? resultado.Properties["description"][0].ToString() : "";
-                        string sistemaOperativo = resultado.Properties["operatingSystem"].Count > 0 ? resultado.Properties["operatingSystem"][0].ToString() : "";
-                        string versionSO = resultado.Properties["operatingSystemVersion"].Count > 0 ? resultado.Properties["operatingSystemVersion"][0].ToString() : "";
+                        string? nombre = resultado.Properties["name"].Count > 0 ? resultado.Properties["name"][0].ToString() : "";
+                        string? descripcion = resultado.Properties["description"].Count > 0 ? resultado.Properties["description"][0].ToString() : "";
+                        string? sistemaOperativo = resultado.Properties["operatingSystem"].Count > 0 ? resultado.Properties["operatingSystem"][0].ToString() : "";
+                        string? versionSO = resultado.Properties["operatingSystemVersion"].Count > 0 ? resultado.Properties["operatingSystemVersion"][0].ToString() : "";
                         DateTime lastLogon = resultado.Properties["lastLogonTimestamp"].Count > 0 ? DateTime.FromFileTime((long)resultado.Properties["lastLogonTimestamp"][0]) : DateTime.MinValue;
 
                         // Llamar a ObtenerIPyMAC para obtener IP y MAC
@@ -153,6 +160,7 @@ namespace PowerTool
                 Logger.LogError($"Error al cargar los equipos del dominio {dominio}", ex);
             }
         }
+
         private Brush EstaEncendido(string nombreEquipo)
         {
             try
@@ -174,7 +182,8 @@ namespace PowerTool
                 return Brushes.Red; // Devuelve rojo si ocurre un error
             }
         }
-        private string ObtenerUsuarioActual(string nombreEquipo)
+
+        private string? ObtenerUsuarioActual(string nombreEquipo)
         {
             try
             {
@@ -195,6 +204,7 @@ namespace PowerTool
             }
             return "N/A";
         }
+
         private (string ipAddress, string macAddress) ObtenerIPyMAC(string nombreEquipo)
         {
             try
@@ -208,7 +218,7 @@ namespace PowerTool
                 foreach (ManagementObject result in searcher.Get())
                 {
                     string[] ipAddresses = (string[])result["IPAddress"];
-                    string macAddress = result["MACAddress"]?.ToString();
+                    string? macAddress = result["MACAddress"]?.ToString();
                     return (ipAddresses.FirstOrDefault(), macAddress);
                 }
             }
@@ -218,6 +228,7 @@ namespace PowerTool
             }
             return ("N/A", "N/A");
         }
+
         private void AbrirExploradorArchivos(string nombreEquipo)
         {
             try
@@ -230,6 +241,7 @@ namespace PowerTool
                 Logger.LogError($"Error al intentar acceder al sistema de archivos de {nombreEquipo}", ex);
             }
         }
+
         private void AbrirPopUpComando_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button button && button.DataContext is Equipo equipoSeleccionado)
@@ -239,6 +251,7 @@ namespace PowerTool
                 commandWindow.ShowDialog(); // Mostrar el PopUp de forma modal
             }
         }
+
         private void AbrirExploradorArchivos_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button button && button.DataContext is Equipo equipoSeleccionado)
@@ -246,9 +259,11 @@ namespace PowerTool
                 AbrirExploradorArchivos(equipoSeleccionado.Name);
             }
         }
+
         private void ConectarRDPButton_Click(object sender, RoutedEventArgs e)
         {
-            if (EquiposListView.SelectedItem is Equipo equipoSeleccionado)
+            // Ahora requiere la selección explícita del equipo
+            if (sender is Button button && button.DataContext is Equipo equipoSeleccionado)
             {
                 try
                 {
@@ -266,6 +281,7 @@ namespace PowerTool
                 MessageBox.Show("Por favor, selecciona un equipo de la lista.");
             }
         }
+
         private void CerrarButton_Click(object sender, RoutedEventArgs e)
         {
             this.Close();
