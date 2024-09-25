@@ -11,11 +11,15 @@ namespace PowerTool.Models
         public DateTime LastLogonTimestamp { get; set; }
         public Brush IsOnline { get; set; }
         public string? CurrentUser { get; set; }
+        public string IPAddress { get; set; }
+        public string MACAddress { get; set; }
 
         public Equipo()
         {
             IsOnline = Brushes.Red;
             CurrentUser = "N/A";
+            IPAddress = "N/A";
+            MACAddress = "N/A";
         }
     }
 }

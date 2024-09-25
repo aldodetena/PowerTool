@@ -36,3 +36,39 @@ Estas son las principales bibliotecas utilizadas en el proyecto **PowerTool**:
      ```bash
      dotnet add package System.DirectoryServices
      ```
+
+6. **[Microsoft.PowerShell.Commands.Diagnostics](https://www.nuget.org/packages/Microsoft.PowerShell.Commands.Diagnostics/)**
+   - Necesario para alojar una instancia de PowerShell.
+   - Instalación:
+     ```bash
+     dotnet add package Microsoft.PowerShell.Commands.Diagnostics --version 7.4.5
+     ```
+
+7. **[Microsoft.PowerShell.ConsoleHost](https://www.nuget.org/packages/Microsoft.PowerShell.ConsoleHost/)**
+   - Necesario para alojar una instancia de PowerShell.
+   - Instalación:
+     ```bash
+     dotnet add package Microsoft.PowerShell.ConsoleHost --version 7.4.5
+     ```
+
+8. **[Microsoft.PowerShell.Commands.Diagnostics](https://www.nuget.org/packages/Microsoft.PowerShell.Commands.Utility/)**
+   - Necesario para alojar una instancia de PowerShell.
+   - Instalación:
+     ```bash
+     dotnet add package Microsoft.PowerShell.Commands.Utility --version 7.4.5
+     ```
+
+9. **[Microsoft.PowerShell.Commands.Management](https://www.nuget.org/packages/Microsoft.PowerShell.Commands.Management/)**
+   - Necesario para alojar una instancia de PowerShell.
+   - Instalación:
+     ```bash
+     dotnet add package Microsoft.PowerShell.Commands.Management --version 7.4.5
+     ```
+
+
+10. **[Microsoft.WSMan.Management](https://www.nuget.org/packages/Microsoft.WSMan.Management/)**
+   - Necesario para alojar una instancia de PowerShell.
+   - Instalación:
+     ```bash
+     dotnet add package Microsoft.WSMan.Management --version 7.4.5
+     ```
