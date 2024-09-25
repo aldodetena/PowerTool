@@ -12,6 +12,7 @@ using SkiaSharp.Views.Desktop;
 using System.IO;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Timers;
 
 namespace PowerTool
 {
@@ -22,10 +23,14 @@ namespace PowerTool
         private readonly SKSvg svgRemote;
         private readonly SKSvg svgFolder;
         private ObservableCollection<Equipo> equipos;
+        private System.Timers.Timer pingTimer;
 
         public MainWindow()
         {
             InitializeComponent();
+            pingTimer = new System.Timers.Timer(5000);
+            pingTimer.Elapsed += PingEquipos;
+            pingTimer.Start();
 
              // Cargar los SVGs
             svgComputer = new SKSvg();
@@ -90,6 +95,18 @@ namespace PowerTool
             var canvas = e.Surface.Canvas;
             canvas.Clear(SKColors.Transparent);
             canvas.DrawPicture(svgFolder.Picture);
+        }
+
+        private void PingEquipos(object sender, ElapsedEventArgs e)
+        {
+            foreach (var equipo in equipos)
+            {
+                // Actualiza el estado de cada equipo en la lista
+                equipo.IsOnline = EstaEncendido(equipo.Name);
+            }
+
+            // Refresca la interfaz para mostrar los cambios
+            Dispatcher.Invoke(() => EquiposListView.Items.Refresh());
         }
 
         private bool EquipoFilter(object item)
