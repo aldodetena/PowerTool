@@ -1,0 +1,14 @@
+<Window x:Class="PowerTool.ProgramListWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Programas Instalados" Height="400" Width="600">
+    <Grid>
+        <ListView ItemsSource="{Binding}" Margin="10">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="Nombre" DisplayMemberBinding="{Binding Name}" Width="Auto"/>
+                </GridView>
+            </ListView.View>
+        </ListView>
+    </Grid>
+</Window>

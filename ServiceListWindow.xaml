@@ -1,0 +1,15 @@
+<Window x:Class="PowerTool.ServiceListWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Servicios en Ejecución" Height="400" Width="800">
+    <Grid>
+        <DataGrid ItemsSource="{Binding}" AutoGenerateColumns="False" Margin="10">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Nombre" Binding="{Binding Name}" Width="*"/>
+                <DataGridTextColumn Header="Nombre para Mostrar" Binding="{Binding DisplayName}" Width="*"/>
+                <DataGridTextColumn Header="Estado" Binding="{Binding State}" Width="*"/>
+                <DataGridTextColumn Header="Modo de Inicio" Binding="{Binding StartMode}" Width="*"/>
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
+</Window>

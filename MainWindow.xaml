@@ -34,7 +34,7 @@
                     <!-- Columna para otros detalles -->
                     <GridViewColumn Header="Sistema Operativo" DisplayMemberBinding="{Binding OperatingSystem}" Width="150"/>
                     <GridViewColumn Header="Versión SO" DisplayMemberBinding="{Binding OperatingSystemVersion}" Width="150"/>
-                    <GridViewColumn Header="Última conexión" DisplayMemberBinding="{Binding LastLogonTimestamp}" Width="150"/>
+                    <GridViewColumn Header="Última conexión" DisplayMemberBinding="{Binding LastLogon}" Width="150"/>
                     <GridViewColumn Header="Estado" Width="50">
                         <GridViewColumn.CellTemplate>
                             <DataTemplate>
@@ -47,7 +47,7 @@
                     <GridViewColumn Header="MAC Address" DisplayMemberBinding="{Binding MACAddress}" Width="150"/>
 
                     <!-- Columna para botones de acciones -->
-                    <GridViewColumn Header="Acciones" Width="150">
+                    <GridViewColumn Header="Acciones" Width="170">
                         <GridViewColumn.CellTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -61,8 +61,17 @@
                                         <skia:SKElement Width="16" Height="16" PaintSurface="OnPaintSurfaceRemote"/>
                                     </Button>
                                     <!-- Botón para acceder al sistema de archivos -->
-                                    <Button Click="AbrirExploradorArchivos_Click" ToolTip="Abrir Sistema de Archivos" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <Button Click="AbrirExploradorArchivos_Click" ToolTip="Abrir Sistema de Archivos" Margin="0,0,10,0" HorizontalAlignment="Center" VerticalAlignment="Center">
                                         <skia:SKElement Width="16" Height="16" PaintSurface="OnPaintSurfaceFolder"/>
+                                    </Button>
+                                    <!-- Botón para ver programas instalados -->
+                                    <Button Click="VerProgramasInstalados_Click" ToolTip="Ver Programas Instalados" Margin="0,0,10,0" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <Image Width="16" Height="16" Source="icons/programs.png"/>
+                                    </Button>
+
+                                    <!-- Botón para ver servicios en ejecución -->
+                                    <Button Click="VerServiciosEnEjecucion_Click" ToolTip="Ver Servicios en Ejecución" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <Image Width="16" Height="16" Source="icons/services.png"/>
                                     </Button>
                                 </StackPanel>
                             </DataTemplate>

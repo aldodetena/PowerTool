@@ -8,7 +8,7 @@ namespace PowerTool.Models
         public string? Description { get; set; }
         public string? OperatingSystem { get; set; }
         public string? OperatingSystemVersion { get; set; }
-        public DateTime LastLogonTimestamp { get; set; }
+        public DateTime LastLogon { get; set; }
         public Brush IsOnline { get; set; }
         public string? CurrentUser { get; set; }
         public string IPAddress { get; set; }

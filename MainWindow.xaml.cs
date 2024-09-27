@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using System.DirectoryServices.ActiveDirectory;
 using System.Windows.Data;
 using System.DirectoryServices;
 using System.Net.NetworkInformation;
@@ -34,16 +35,16 @@ namespace PowerTool
 
              // Cargar los SVGs
             svgComputer = new SKSvg();
-            svgComputer.Load(Path.Combine("icons", "computer.svg"));
+            svgComputer.Load(Path.Combine("Icons", "computer.svg"));
 
             svgScript = new SKSvg();
-            svgScript.Load(Path.Combine("icons", "script.svg"));
+            svgScript.Load(Path.Combine("Icons", "script.svg"));
 
             svgRemote = new SKSvg();
-            svgRemote.Load(Path.Combine("icons", "remote.svg"));
+            svgRemote.Load(Path.Combine("Icons", "remote.svg"));
 
             svgFolder = new SKSvg();
-            svgFolder.Load(Path.Combine("icons", "folder.svg"));
+            svgFolder.Load(Path.Combine("Icons", "folder.svg"));
 
             equipos = new ObservableCollection<Equipo>();
             EquiposListView.ItemsSource = equipos;
@@ -97,6 +98,24 @@ namespace PowerTool
             canvas.DrawPicture(svgFolder.Picture);
         }
 
+        private List<string> ObtenerControladoresDeDominio()
+        {
+            List<string> controladores = new List<string>();
+            try
+            {
+                Domain domain = Domain.GetCurrentDomain();
+                foreach (DomainController dc in domain.DomainControllers)
+                {
+                    controladores.Add(dc.Name);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("Error al obtener los controladores de dominio", ex);
+            }
+            return controladores;
+        }
+
         private void PingEquipos(object sender, ElapsedEventArgs e)
         {
             foreach (var equipo in equipos)
@@ -131,20 +150,23 @@ namespace PowerTool
                 searcher.PropertiesToLoad.Add("description");
                 searcher.PropertiesToLoad.Add("operatingSystem");
                 searcher.PropertiesToLoad.Add("operatingSystemVersion");
-                searcher.PropertiesToLoad.Add("lastLogonTimestamp");
 
                 SearchResultCollection resultados = searcher.FindAll();
                 List<Task<Equipo>> tareas = new List<Task<Equipo>>();
 
+                List<string> controladoresDeDominio = ObtenerControladoresDeDominio();
+
                 foreach (SearchResult resultado in resultados)
                 {
-                    tareas.Add(Task.Run(() =>
+                    tareas.Add(Task.Run(async () =>
                     {
-                        string? nombre = resultado.Properties["name"].Count > 0 ? resultado.Properties["name"][0].ToString() : "";
-                        string? descripcion = resultado.Properties["description"].Count > 0 ? resultado.Properties["description"][0].ToString() : "";
-                        string? sistemaOperativo = resultado.Properties["operatingSystem"].Count > 0 ? resultado.Properties["operatingSystem"][0].ToString() : "";
-                        string? versionSO = resultado.Properties["operatingSystemVersion"].Count > 0 ? resultado.Properties["operatingSystemVersion"][0].ToString() : "";
-                        DateTime lastLogon = resultado.Properties["lastLogonTimestamp"].Count > 0 ? DateTime.FromFileTime((long)resultado.Properties["lastLogonTimestamp"][0]) : DateTime.MinValue;
+                        string nombre = resultado.Properties["name"].Count > 0 ? resultado.Properties["name"][0].ToString() : "";
+                        string descripcion = resultado.Properties["description"].Count > 0 ? resultado.Properties["description"][0].ToString() : "";
+                        string sistemaOperativo = resultado.Properties["operatingSystem"].Count > 0 ? resultado.Properties["operatingSystem"][0].ToString() : "";
+                        string versionSO = resultado.Properties["operatingSystemVersion"].Count > 0 ? resultado.Properties["operatingSystemVersion"][0].ToString() : "";
+
+                        // Obtener el último inicio de sesión preciso
+                        DateTime lastLogon = await ObtenerUltimoInicioSesion(nombre, controladoresDeDominio);
 
                         // Llamar a ObtenerIPyMAC para obtener IP y MAC
                         var (ipAddress, macAddress) = ObtenerIPyMAC(nombre);
@@ -155,11 +177,11 @@ namespace PowerTool
                             Description = descripcion,
                             OperatingSystem = sistemaOperativo,
                             OperatingSystemVersion = versionSO,
-                            LastLogonTimestamp = lastLogon,
+                            LastLogon = lastLogon, // Puedes renombrar esta propiedad a LastLogon
                             IsOnline = EstaEncendido(nombre),
                             CurrentUser = ObtenerUsuarioActual(nombre),
-                            IPAddress = ipAddress,       // Asignar IP
-                            MACAddress = macAddress      // Asignar MAC
+                            IPAddress = ipAddress,
+                            MACAddress = macAddress
                         };
 
                         return equipo;
@@ -246,6 +268,150 @@ namespace PowerTool
             return ("N/A", "N/A");
         }
 
+        private List<InstalledProgram> ObtenerProgramasInstalados(string nombreEquipo)
+        {
+            List<InstalledProgram> programas = new List<InstalledProgram>();
+
+            try
+            {
+                ConnectionOptions options = new ConnectionOptions();
+
+                ManagementScope scope = new ManagementScope($@"\\{nombreEquipo}\root\default", options);
+                scope.Connect();
+
+                ManagementClass registry = new ManagementClass(scope, new ManagementPath("StdRegProv"), null);
+
+                // Clave del registro que contiene la lista de programas instalados
+                const uint HKEY_LOCAL_MACHINE = 0x80000002;
+                string registryKey = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall";
+
+                // Obtener las subclaves (los identificadores de los programas instalados)
+                ManagementBaseObject inParams = registry.GetMethodParameters("EnumKey");
+                inParams["hDefKey"] = HKEY_LOCAL_MACHINE;
+                inParams["sSubKeyName"] = registryKey;
+
+                ManagementBaseObject outParams = registry.InvokeMethod("EnumKey", inParams, null);
+
+                string[] subKeyNames = outParams?["sNames"] as string[];
+
+                if (subKeyNames != null)
+                {
+                    foreach (string subKeyName in subKeyNames)
+                    {
+                        // Obtener el valor "DisplayName" de cada subclave
+                        ManagementBaseObject inParamsGetStringValue = registry.GetMethodParameters("GetStringValue");
+                        inParamsGetStringValue["hDefKey"] = HKEY_LOCAL_MACHINE;
+                        inParamsGetStringValue["sSubKeyName"] = $@"{registryKey}\{subKeyName}";
+                        inParamsGetStringValue["sValueName"] = "DisplayName";
+
+                        ManagementBaseObject outParamsGetStringValue = registry.InvokeMethod("GetStringValue", inParamsGetStringValue, null);
+
+                        int returnCode = Convert.ToInt32(outParamsGetStringValue["ReturnValue"]);
+                        if (returnCode == 0) // 0 significa éxito
+                        {
+                            string displayName = outParamsGetStringValue["sValue"]?.ToString();
+                            if (!string.IsNullOrEmpty(displayName))
+                            {
+                                programas.Add(new InstalledProgram { Name = displayName });
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError($"Error al obtener programas instalados de {nombreEquipo}", ex);
+            }
+
+            return programas;
+        }
+
+        private List<ServiceInfo> ObtenerServiciosEnEjecucion(string nombreEquipo)
+        {
+            List<ServiceInfo> servicios = new List<ServiceInfo>();
+
+            try
+            {
+                ConnectionOptions options = new ConnectionOptions();
+                ManagementScope scope = new ManagementScope($@"\\{nombreEquipo}\root\cimv2", options);
+                scope.Connect();
+
+                ObjectQuery query = new ObjectQuery("SELECT * FROM Win32_Service");
+                ManagementObjectSearcher searcher = new ManagementObjectSearcher(scope, query);
+
+                foreach (ManagementObject service in searcher.Get())
+                {
+                    servicios.Add(new ServiceInfo
+                    {
+                        Name = service["Name"]?.ToString(),
+                        DisplayName = service["DisplayName"]?.ToString(),
+                        State = service["State"]?.ToString(),
+                        StartMode = service["StartMode"]?.ToString()
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError($"Error al obtener servicios de {nombreEquipo}", ex);
+            }
+
+            return servicios;
+        }
+
+        private async Task<DateTime> ObtenerUltimoInicioSesion(string nombreEquipo, List<string> controladoresDeDominio)
+        {
+            DateTime ultimoInicioSesion = DateTime.MinValue;
+
+            try
+            {
+                string filtro = $"(sAMAccountName={nombreEquipo}$)"; // El $ es importante para equipos
+                string[] propiedades = { "lastLogon" };
+
+                List<Task<DateTime>> tareas = new List<Task<DateTime>>();
+
+                foreach (string dc in controladoresDeDominio)
+                {
+                    tareas.Add(Task.Run(() =>
+                    {
+                        try
+                        {
+                            DirectoryEntry entry = new DirectoryEntry($"LDAP://{dc}");
+                            DirectorySearcher searcher = new DirectorySearcher(entry)
+                            {
+                                Filter = filtro
+                            };
+                            searcher.PropertiesToLoad.AddRange(propiedades);
+
+                            SearchResult result = searcher.FindOne();
+                            if (result != null && result.Properties.Contains("lastLogon"))
+                            {
+                                long lastLogonTicks = (long)result.Properties["lastLogon"][0];
+                                if (lastLogonTicks > 0)
+                                {
+                                    DateTime lastLogon = DateTime.FromFileTime(lastLogonTicks);
+                                    return lastLogon;
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Logger.LogError($"Error al obtener lastLogon de {nombreEquipo} en controlador {dc}", ex);
+                        }
+                        return DateTime.MinValue;
+                    }));
+                }
+
+                DateTime[] resultados = await Task.WhenAll(tareas);
+
+                ultimoInicioSesion = resultados.Max();
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError($"Error al obtener el último inicio de sesión preciso para {nombreEquipo}", ex);
+            }
+            return ultimoInicioSesion;
+        }
+
         private void AbrirExploradorArchivos(string nombreEquipo)
         {
             try
@@ -296,6 +462,30 @@ namespace PowerTool
             else
             {
                 MessageBox.Show("Por favor, selecciona un equipo de la lista.");
+            }
+        }
+
+        private void VerProgramasInstalados_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.DataContext is Equipo equipoSeleccionado)
+            {
+                List<InstalledProgram> programas = ObtenerProgramasInstalados(equipoSeleccionado.Name);
+
+                // Mostrar los programas en una nueva ventana
+                ProgramListWindow programListWindow = new ProgramListWindow(programas, equipoSeleccionado.Name);
+                programListWindow.Show();
+            }
+        }
+
+        private void VerServiciosEnEjecucion_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.DataContext is Equipo equipoSeleccionado)
+            {
+                List<ServiceInfo> servicios = ObtenerServiciosEnEjecucion(equipoSeleccionado.Name);
+
+                // Mostrar los servicios en una nueva ventana
+                ServiceListWindow serviceListWindow = new ServiceListWindow(servicios, equipoSeleccionado.Name);
+                serviceListWindow.Show();
             }
         }
 
