@@ -1,0 +1,31 @@
+<Window x:Class="PowerTool.DomainEditWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Agregar/Editar Dominio" Height="250" Width="400">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <Label Grid.Row="0" Grid.Column="0" Content="Dominio:" VerticalAlignment="Center"/>
+        <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding DomainName}" Margin="5"/>
+
+        <Label Grid.Row="1" Grid.Column="0" Content="Usuario:" VerticalAlignment="Center"/>
+        <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Username}" Margin="5"/>
+
+        <Label Grid.Row="2" Grid.Column="0" Content="Contraseña:" VerticalAlignment="Center"/>
+        <PasswordBox x:Name="passwordBox" Grid.Row="2" Grid.Column="1" Margin="5"/>
+
+        <StackPanel Grid.Row="3" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="5">
+            <Button Content="Guardar" Width="75" Margin="5" Click="SaveButton_Click"/>
+            <Button Content="Cancelar" Width="75" Margin="5" Click="CancelButton_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

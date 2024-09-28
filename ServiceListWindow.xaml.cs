@@ -1,12 +1,16 @@
 using System.Windows;
+using PowerTool.Services;
+using PowerTool.Models;
 
-namespace PowerTool;
-public partial class ServiceListWindow : Window
+namespace PowerTool
 {
-    public ServiceListWindow(List<ServiceInfo> servicios, string nombreEquipo)
+    public partial class ServiceListWindow : Window
     {
-        InitializeComponent();
-        this.Title = $"Servicios en ejecución en {nombreEquipo}";
-        this.DataContext = servicios;
+        public ServiceListWindow(List<ServiceInfo> servicios, string nombreEquipo)
+        {
+            InitializeComponent();
+            this.Title = $"Servicios en ejecución en {nombreEquipo}";
+            this.DataContext = servicios;
+        }
     }
 }

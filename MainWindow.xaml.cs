@@ -5,8 +5,9 @@ using System.DirectoryServices;
 using System.Net.NetworkInformation;
 using System.Management;
 using System.Windows;
-using PowerTool.Models;  // Importar la clase Equipo
-using PowerTool.Utilities;  // Importar la clase Logger;
+using PowerTool.Models;
+using PowerTool.Utilities;
+using PowerTool.Services;
 using SkiaSharp;
 using Svg.Skia;
 using SkiaSharp.Views.Desktop;
@@ -25,6 +26,7 @@ namespace PowerTool
         private readonly SKSvg svgFolder;
         private ObservableCollection<Equipo> equipos;
         private System.Timers.Timer pingTimer;
+        private DomainInfo selectedDomain;
 
         public MainWindow()
         {
@@ -55,12 +57,12 @@ namespace PowerTool
             DomainWindow domainWindow = new DomainWindow();
             if (domainWindow.ShowDialog() == true)
             {
-                string dominio = domainWindow.DomainName;
-                CargarEquiposDelDominio(dominio);
+                selectedDomain = domainWindow.SelectedDomain;
+                CargarEquiposDelDominio(selectedDomain);
             }
             else
             {
-                MessageBox.Show("No se ha introducido un dominio válido. La aplicación se cerrará.");
+                MessageBox.Show("No se ha seleccionado un dominio. La aplicación se cerrará.");
                 this.Close();
             }
         }
@@ -136,11 +138,12 @@ namespace PowerTool
             return (item as Equipo).Name.IndexOf(SearchBox.Text, StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
-        private async void CargarEquiposDelDominio(string dominio)
+        private async void CargarEquiposDelDominio(DomainInfo selectedDomain)
         {
             try
             {
-                DirectoryEntry entry = new DirectoryEntry($"LDAP://{dominio}");
+                string password = EncryptionHelper.DecryptString(selectedDomain.EncryptedPassword);
+                DirectoryEntry entry = new DirectoryEntry($"LDAP://{selectedDomain.DomainName}", selectedDomain.Username, password);
                 DirectorySearcher searcher = new DirectorySearcher(entry)
                 {
                     Filter = "(objectCategory=computer)"
@@ -155,37 +158,38 @@ namespace PowerTool
                 List<Task<Equipo>> tareas = new List<Task<Equipo>>();
 
                 List<string> controladoresDeDominio = ObtenerControladoresDeDominio();
+                string nombreEquipoLocal = Environment.MachineName.Trim().ToLowerInvariant();
 
                 foreach (SearchResult resultado in resultados)
                 {
-                    tareas.Add(Task.Run(async () =>
+                    string nombre = resultado.Properties["name"].Count > 0 ? resultado.Properties["name"][0].ToString().Trim().ToLowerInvariant() : "";
+                    if (!string.Equals(nombre, nombreEquipoLocal, StringComparison.Ordinal))
                     {
-                        string nombre = resultado.Properties["name"].Count > 0 ? resultado.Properties["name"][0].ToString() : "";
-                        string descripcion = resultado.Properties["description"].Count > 0 ? resultado.Properties["description"][0].ToString() : "";
-                        string sistemaOperativo = resultado.Properties["operatingSystem"].Count > 0 ? resultado.Properties["operatingSystem"][0].ToString() : "";
-                        string versionSO = resultado.Properties["operatingSystemVersion"].Count > 0 ? resultado.Properties["operatingSystemVersion"][0].ToString() : "";
-
-                        // Obtener el último inicio de sesión preciso
-                        DateTime lastLogon = await ObtenerUltimoInicioSesion(nombre, controladoresDeDominio);
-
-                        // Llamar a ObtenerIPyMAC para obtener IP y MAC
-                        var (ipAddress, macAddress) = ObtenerIPyMAC(nombre);
-
-                        var equipo = new Equipo
+                        tareas.Add(Task.Run(async () =>
                         {
-                            Name = nombre,
-                            Description = descripcion,
-                            OperatingSystem = sistemaOperativo,
-                            OperatingSystemVersion = versionSO,
-                            LastLogon = lastLogon, // Puedes renombrar esta propiedad a LastLogon
-                            IsOnline = EstaEncendido(nombre),
-                            CurrentUser = ObtenerUsuarioActual(nombre),
-                            IPAddress = ipAddress,
-                            MACAddress = macAddress
-                        };
+                            string? nombre = resultado.Properties["name"].Count > 0 ? resultado.Properties["name"][0].ToString() : "";
+                            string? descripcion = resultado.Properties["description"].Count > 0 ? resultado.Properties["description"][0].ToString() : "";
+                            string? sistemaOperativo = resultado.Properties["operatingSystem"].Count > 0 ? resultado.Properties["operatingSystem"][0].ToString() : "";
+                            string? versionSO = resultado.Properties["operatingSystemVersion"].Count > 0 ? resultado.Properties["operatingSystemVersion"][0].ToString() : "";
+                            DateTime lastLogon = await ObtenerUltimoInicioSesion(nombre, controladoresDeDominio);
+                            var (ipAddress, macAddress) = ObtenerIPyMAC(nombre, selectedDomain);
 
-                        return equipo;
-                    }));
+                            var equipo = new Equipo
+                            {
+                                Name = nombre,
+                                Description = descripcion,
+                                OperatingSystem = sistemaOperativo,
+                                OperatingSystemVersion = versionSO,
+                                LastLogon = lastLogon,
+                                IsOnline = EstaEncendido(nombre),
+                                CurrentUser = ObtenerUsuarioActual(nombre, selectedDomain),
+                                IPAddress = ipAddress,
+                                MACAddress = macAddress
+                            };
+
+                            return equipo;
+                        }));
+                    }
                 }
 
                 Equipo[] equiposCargados = await Task.WhenAll(tareas);
@@ -196,7 +200,7 @@ namespace PowerTool
             }
             catch (Exception ex)
             {
-                Logger.LogError($"Error al cargar los equipos del dominio {dominio}", ex);
+                Logger.LogError($"Error al cargar los equipos del dominio {selectedDomain.DomainName}", ex);
             }
         }
 
@@ -222,11 +226,18 @@ namespace PowerTool
             }
         }
 
-        private string? ObtenerUsuarioActual(string nombreEquipo)
+        private string ObtenerUsuarioActual(string nombreEquipo, DomainInfo selectedDomain)
         {
             try
             {
-                ManagementScope scope = new ManagementScope($@"\\{nombreEquipo}\root\cimv2");
+                ManagementScope scope;
+                string password = EncryptionHelper.DecryptString(selectedDomain.EncryptedPassword);
+
+                ConnectionOptions options = new ConnectionOptions();
+                options.Username = selectedDomain.Username;
+                options.Password = password;
+
+                scope = new ManagementScope($@"\\{nombreEquipo}\root\cimv2", options);
                 scope.Connect();
 
                 ObjectQuery query = new ObjectQuery("SELECT UserName FROM Win32_ComputerSystem");
@@ -244,11 +255,19 @@ namespace PowerTool
             return "N/A";
         }
 
-        private (string ipAddress, string macAddress) ObtenerIPyMAC(string nombreEquipo)
+        private (string ipAddress, string macAddress) ObtenerIPyMAC(string nombreEquipo, DomainInfo selectedDomain)
         {
             try
             {
-                ManagementScope scope = new ManagementScope($@"\\{nombreEquipo}\root\cimv2");
+                ManagementScope scope;
+                string nombreEquipoLocal = Environment.MachineName;
+                string password = EncryptionHelper.DecryptString(selectedDomain.EncryptedPassword);
+
+                ConnectionOptions options = new ConnectionOptions();
+                options.Username = selectedDomain.Username;
+                options.Password = password;
+
+                scope = new ManagementScope($@"\\{nombreEquipo}\root\cimv2", options);
                 scope.Connect();
 
                 ObjectQuery query = new ObjectQuery("SELECT IPAddress, MACAddress FROM Win32_NetworkAdapterConfiguration WHERE IPEnabled = True");
@@ -257,7 +276,7 @@ namespace PowerTool
                 foreach (ManagementObject result in searcher.Get())
                 {
                     string[] ipAddresses = (string[])result["IPAddress"];
-                    string? macAddress = result["MACAddress"]?.ToString();
+                    string macAddress = result["MACAddress"]?.ToString();
                     return (ipAddresses.FirstOrDefault(), macAddress);
                 }
             }
@@ -268,13 +287,17 @@ namespace PowerTool
             return ("N/A", "N/A");
         }
 
-        private List<InstalledProgram> ObtenerProgramasInstalados(string nombreEquipo)
+        private List<InstalledProgram> ObtenerProgramasInstalados(string nombreEquipo, DomainInfo selectedDomain)
         {
             List<InstalledProgram> programas = new List<InstalledProgram>();
 
             try
             {
+                string password = EncryptionHelper.DecryptString(selectedDomain.EncryptedPassword);
+
                 ConnectionOptions options = new ConnectionOptions();
+                options.Username = selectedDomain.Username;
+                options.Password = password;
 
                 ManagementScope scope = new ManagementScope($@"\\{nombreEquipo}\root\default", options);
                 scope.Connect();
@@ -292,7 +315,7 @@ namespace PowerTool
 
                 ManagementBaseObject outParams = registry.InvokeMethod("EnumKey", inParams, null);
 
-                string[] subKeyNames = outParams?["sNames"] as string[];
+                string[]? subKeyNames = outParams?["sNames"] as string[];
 
                 if (subKeyNames != null)
                 {
@@ -309,7 +332,7 @@ namespace PowerTool
                         int returnCode = Convert.ToInt32(outParamsGetStringValue["ReturnValue"]);
                         if (returnCode == 0) // 0 significa éxito
                         {
-                            string displayName = outParamsGetStringValue["sValue"]?.ToString();
+                            string? displayName = outParamsGetStringValue["sValue"]?.ToString();
                             if (!string.IsNullOrEmpty(displayName))
                             {
                                 programas.Add(new InstalledProgram { Name = displayName });
@@ -326,13 +349,18 @@ namespace PowerTool
             return programas;
         }
 
-        private List<ServiceInfo> ObtenerServiciosEnEjecucion(string nombreEquipo)
+        private List<ServiceInfo> ObtenerServiciosEnEjecucion(string nombreEquipo, DomainInfo selectedDomain)
         {
             List<ServiceInfo> servicios = new List<ServiceInfo>();
 
             try
             {
+                string password = EncryptionHelper.DecryptString(selectedDomain.EncryptedPassword);
+
                 ConnectionOptions options = new ConnectionOptions();
+                options.Username = selectedDomain.Username;
+                options.Password = password;
+
                 ManagementScope scope = new ManagementScope($@"\\{nombreEquipo}\root\cimv2", options);
                 scope.Connect();
 
@@ -375,7 +403,8 @@ namespace PowerTool
                     {
                         try
                         {
-                            DirectoryEntry entry = new DirectoryEntry($"LDAP://{dc}");
+                            string password = EncryptionHelper.DecryptString(selectedDomain.EncryptedPassword);
+                            DirectoryEntry entry = new DirectoryEntry($"LDAP://{selectedDomain.DomainName}", selectedDomain.Username, password);
                             DirectorySearcher searcher = new DirectorySearcher(entry)
                             {
                                 Filter = filtro
@@ -469,7 +498,7 @@ namespace PowerTool
         {
             if (sender is Button button && button.DataContext is Equipo equipoSeleccionado)
             {
-                List<InstalledProgram> programas = ObtenerProgramasInstalados(equipoSeleccionado.Name);
+                List<InstalledProgram> programas = ObtenerProgramasInstalados(equipoSeleccionado.Name, selectedDomain);
 
                 // Mostrar los programas en una nueva ventana
                 ProgramListWindow programListWindow = new ProgramListWindow(programas, equipoSeleccionado.Name);
@@ -481,7 +510,7 @@ namespace PowerTool
         {
             if (sender is Button button && button.DataContext is Equipo equipoSeleccionado)
             {
-                List<ServiceInfo> servicios = ObtenerServiciosEnEjecucion(equipoSeleccionado.Name);
+                List<ServiceInfo> servicios = ObtenerServiciosEnEjecucion(equipoSeleccionado.Name, selectedDomain);
 
                 // Mostrar los servicios en una nueva ventana
                 ServiceListWindow serviceListWindow = new ServiceListWindow(servicios, equipoSeleccionado.Name);

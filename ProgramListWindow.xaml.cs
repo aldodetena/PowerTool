@@ -1,12 +1,15 @@
 using System.Windows;
+using PowerTool.Models;
 
-namespace PowerTool;
-public partial class ProgramListWindow : Window
+namespace PowerTool
 {
-    public ProgramListWindow(List<InstalledProgram> programas, string nombreEquipo)
+    public partial class ProgramListWindow : Window
     {
-        InitializeComponent();
-        this.Title = $"Programas instalados en {nombreEquipo}";
-        this.DataContext = programas;
+        public ProgramListWindow(List<InstalledProgram> programas, string nombreEquipo)
+        {
+            InitializeComponent();
+            this.Title = $"Programas instalados en {nombreEquipo}";
+            this.DataContext = programas;
+        }
     }
 }

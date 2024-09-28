@@ -1,12 +1,29 @@
 <Window x:Class="PowerTool.DomainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Conectar al Dominio" Height="150" Width="300">
+        Title="Seleccionar Dominio" Height="300" Width="400">
     <Grid>
-        <StackPanel Margin="10">
-            <TextBlock Text="Introduce el nombre del dominio:" Margin="0,0,0,10"/>
-            <TextBox Name="DomainTextBox" Width="250"/>
-            <Button Content="Conectar" Width="100" Margin="0,10,0,0" HorizontalAlignment="Center" Click="ConectarButton_Click"/>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Lista de dominios guardados -->
+        <ListView Name="DomainsListView" Grid.Row="0" Margin="10" ItemsSource="{Binding SavedDomains}">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="Dominio" DisplayMemberBinding="{Binding DomainName}" Width="200"/>
+                    <!-- Añade más columnas si es necesario -->
+                </GridView>
+            </ListView.View>
+        </ListView>
+
+        <!-- Botones -->
+        <StackPanel Orientation="Horizontal" Grid.Row="1" HorizontalAlignment="Center" Margin="10">
+            <Button Content="Agregar" Width="75" Margin="5" Click="AddDomain_Click"/>
+            <Button Content="Editar" Width="75" Margin="5" Click="EditDomain_Click"/>
+            <Button Content="Eliminar" Width="75" Margin="5" Click="DeleteDomain_Click"/>
+            <Button Content="Seleccionar" Width="75" Margin="5" Click="SelectDomain_Click"/>
         </StackPanel>
     </Grid>
 </Window>
