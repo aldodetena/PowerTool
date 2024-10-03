@@ -66,12 +66,11 @@
                                     </Button>
                                     <!-- Botón para ver programas instalados -->
                                     <Button Click="VerProgramasInstalados_Click" ToolTip="Ver Programas Instalados" Margin="0,0,10,0" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                        <Image Width="16" Height="16" Source="icons/programs.png"/>
+                                        <skia:SKElement Width="16" Height="16" PaintSurface="OnPaintSurfacePrograms"/>
                                     </Button>
-
                                     <!-- Botón para ver servicios en ejecución -->
                                     <Button Click="VerServiciosEnEjecucion_Click" ToolTip="Ver Servicios en Ejecución" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                        <Image Width="16" Height="16" Source="icons/services.png"/>
+                                        <skia:SKElement Width="16" Height="16" PaintSurface="OnPaintSurfaceServices"/>
                                     </Button>
                                 </StackPanel>
                             </DataTemplate>

@@ -24,16 +24,25 @@ namespace PowerTool
         private readonly SKSvg svgScript;
         private readonly SKSvg svgRemote;
         private readonly SKSvg svgFolder;
+        private readonly SKSvg svgPrograms;
+        private readonly SKSvg svgServices;
+        private readonly object equiposLock = new object();
         private ObservableCollection<Equipo> equipos;
         private System.Timers.Timer pingTimer;
+        private System.Timers.Timer usuarioTimer;
         private DomainInfo selectedDomain;
 
         public MainWindow()
         {
             InitializeComponent();
+
             pingTimer = new System.Timers.Timer(5000);
             pingTimer.Elapsed += PingEquipos;
             pingTimer.Start();
+
+            usuarioTimer = new System.Timers.Timer(60000); // Actualiza cada 60 segundos
+            usuarioTimer.Elapsed += ActualizarUsuarios;
+            usuarioTimer.Start();
 
              // Cargar los SVGs
             svgComputer = new SKSvg();
@@ -47,6 +56,12 @@ namespace PowerTool
 
             svgFolder = new SKSvg();
             svgFolder.Load(Path.Combine("Icons", "folder.svg"));
+
+            svgPrograms = new SKSvg();
+            svgPrograms.Load(Path.Combine("Icons", "programs.svg"));
+
+            svgServices = new SKSvg();
+            svgServices.Load(Path.Combine("Icons", "services.svg"));
 
             equipos = new ObservableCollection<Equipo>();
             EquiposListView.ItemsSource = equipos;
@@ -100,6 +115,20 @@ namespace PowerTool
             canvas.DrawPicture(svgFolder.Picture);
         }
 
+        private void OnPaintSurfacePrograms(object sender, SKPaintSurfaceEventArgs e)
+        {
+            var canvas = e.Surface.Canvas;
+            canvas.Clear(SKColors.Transparent);
+            canvas.DrawPicture(svgPrograms.Picture);
+        }
+
+        private void OnPaintSurfaceServices(object sender, SKPaintSurfaceEventArgs e)
+        {
+            var canvas = e.Surface.Canvas;
+            canvas.Clear(SKColors.Transparent);
+            canvas.DrawPicture(svgServices.Picture);
+        }
+
         private List<string> ObtenerControladoresDeDominio()
         {
             List<string> controladores = new List<string>();
@@ -120,14 +149,44 @@ namespace PowerTool
 
         private void PingEquipos(object sender, ElapsedEventArgs e)
         {
-            foreach (var equipo in equipos)
+            lock (equiposLock)
             {
-                // Actualiza el estado de cada equipo en la lista
-                equipo.IsOnline = EstaEncendido(equipo.Name);
-            }
+                foreach (var equipo in equipos)
+                {
+                    string nombreEquipo = equipo.Name;
+                    bool estaEncendido = EstaEncendido(nombreEquipo);
 
-            // Refresca la interfaz para mostrar los cambios
-            Dispatcher.Invoke(() => EquiposListView.Items.Refresh());
+                    Dispatcher.Invoke(() =>
+                    {
+                        equipo.IsOnline = estaEncendido ? Brushes.Green : Brushes.Red;
+                    });
+                }
+            }
+        }
+
+        private void ActualizarUsuarios(object sender, ElapsedEventArgs e)
+        {
+            lock (equiposLock)
+            {
+                foreach (var equipo in equipos)
+                {
+                    string nombreEquipo = equipo.Name;
+                    if (equipo.IsOnline == Brushes.Green)
+                    {
+                        Dispatcher.Invoke(() =>
+                        {
+                            equipo.CurrentUser = ObtenerUsuarioActual(nombreEquipo, selectedDomain);
+                        });
+                    }
+                    else
+                    {
+                        Dispatcher.Invoke(() =>
+                        {
+                            equipo.CurrentUser = "N/A";
+                        });
+                    }
+                }
+            }
         }
 
         private bool EquipoFilter(object item)
@@ -181,7 +240,7 @@ namespace PowerTool
                                 OperatingSystem = sistemaOperativo,
                                 OperatingSystemVersion = versionSO,
                                 LastLogon = lastLogon,
-                                IsOnline = EstaEncendido(nombre),
+                                IsOnline = Brushes.Red,
                                 CurrentUser = ObtenerUsuarioActual(nombre, selectedDomain),
                                 IPAddress = ipAddress,
                                 MACAddress = macAddress
@@ -204,25 +263,18 @@ namespace PowerTool
             }
         }
 
-        private Brush EstaEncendido(string nombreEquipo)
+        private bool EstaEncendido(string nombreEquipo)
         {
             try
             {
                 Ping ping = new Ping();
                 PingReply reply = ping.Send(nombreEquipo);
 
-                if (reply.Status == IPStatus.Success)
-                {
-                    return Brushes.Green; // Devuelve verde si está encendido
-                }
-                else
-                {
-                    return Brushes.Red; // Devuelve rojo si no está encendido
-                }
+                return reply.Status == IPStatus.Success;
             }
             catch
             {
-                return Brushes.Red; // Devuelve rojo si ocurre un error
+                return false;
             }
         }
 
