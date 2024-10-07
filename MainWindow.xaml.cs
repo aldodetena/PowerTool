@@ -31,6 +31,10 @@ namespace PowerTool
         private System.Timers.Timer pingTimer;
         private System.Timers.Timer usuarioTimer;
         private DomainInfo selectedDomain;
+        private int onlineCount = 0;
+        private int offlineCount = 0;
+        private int usersOnlineCount = 0;
+        private int usersOfflineCount = 0;
 
         public MainWindow()
         {
@@ -40,7 +44,7 @@ namespace PowerTool
             pingTimer.Elapsed += PingEquipos;
             pingTimer.Start();
 
-            usuarioTimer = new System.Timers.Timer(60000); // Actualiza cada 60 segundos
+            usuarioTimer = new System.Timers.Timer(5000); // Actualiza cada 60 segundos
             usuarioTimer.Elapsed += ActualizarUsuarios;
             usuarioTimer.Start();
 
@@ -149,6 +153,9 @@ namespace PowerTool
 
         private void PingEquipos(object sender, ElapsedEventArgs e)
         {
+            int tempOnlineCount = 0;
+            int tempOfflineCount = 0;
+
             lock (equiposLock)
             {
                 foreach (var equipo in equipos)
@@ -159,13 +166,25 @@ namespace PowerTool
                     Dispatcher.Invoke(() =>
                     {
                         equipo.IsOnline = estaEncendido ? Brushes.Green : Brushes.Red;
+                        if (estaEncendido)
+                            tempOnlineCount++;
+                        else
+                            tempOfflineCount++;
                     });
                 }
             }
+
+            onlineCount = tempOnlineCount;
+            offlineCount = tempOfflineCount;
+
+            Dispatcher.Invoke(ActualizarEstadisticas);
         }
 
         private void ActualizarUsuarios(object sender, ElapsedEventArgs e)
         {
+            int tempUsersOnlineCount = 0;
+            int tempUsersOfflineCount = 0;
+
             lock (equiposLock)
             {
                 foreach (var equipo in equipos)
@@ -176,6 +195,10 @@ namespace PowerTool
                         Dispatcher.Invoke(() =>
                         {
                             equipo.CurrentUser = ObtenerUsuarioActual(nombreEquipo, selectedDomain);
+                            if (equipo.CurrentUser != "N/A")
+                                tempUsersOnlineCount++;
+                            else
+                                tempUsersOfflineCount++;
                         });
                     }
                     else
@@ -183,10 +206,24 @@ namespace PowerTool
                         Dispatcher.Invoke(() =>
                         {
                             equipo.CurrentUser = "N/A";
+                            tempUsersOfflineCount++;
                         });
                     }
                 }
             }
+
+            usersOnlineCount = tempUsersOnlineCount;
+            usersOfflineCount = tempUsersOfflineCount;
+
+            Dispatcher.Invoke(ActualizarEstadisticas);
+        }
+
+        private void ActualizarEstadisticas()
+        {
+            OnlineCount.Text = onlineCount.ToString();
+            OfflineCount.Text = offlineCount.ToString();
+            UsersOnlineCount.Text = usersOnlineCount.ToString();
+            UsersOfflineCount.Text = usersOfflineCount.ToString();
         }
 
         private bool EquipoFilter(object item)
