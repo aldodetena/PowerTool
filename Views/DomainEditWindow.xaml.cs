@@ -1,10 +1,8 @@
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Input;
 using PowerTool.Models;
 using PowerTool.Services;
 
-namespace PowerTool
+namespace PowerTool.Views
 {
     public partial class DomainEditWindow : Window
     {

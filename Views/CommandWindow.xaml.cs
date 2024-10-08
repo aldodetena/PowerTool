@@ -2,7 +2,7 @@ using System.Windows;
 using PowerTool.Models;
 using PowerTool.Services;
 
-namespace PowerTool
+namespace PowerTool.Views
 {
     public partial class CommandWindow : Window
     {

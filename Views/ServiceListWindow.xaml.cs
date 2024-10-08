@@ -1,8 +1,7 @@
 using System.Windows;
-using PowerTool.Services;
 using PowerTool.Models;
 
-namespace PowerTool
+namespace PowerTool.Views
 {
     public partial class ServiceListWindow : Window
     {

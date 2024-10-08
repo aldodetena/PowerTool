@@ -1,4 +1,4 @@
-<Window x:Class="PowerTool.ServiceListWindow"
+<Window x:Class="PowerTool.Views.ServiceListWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Servicios en Ejecución" Height="400" Width="800">

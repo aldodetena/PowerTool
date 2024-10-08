@@ -8,6 +8,7 @@ using System.Windows;
 using PowerTool.Models;
 using PowerTool.Utilities;
 using PowerTool.Services;
+using PowerTool.Views;
 using SkiaSharp;
 using Svg.Skia;
 using SkiaSharp.Views.Desktop;

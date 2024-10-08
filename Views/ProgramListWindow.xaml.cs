@@ -1,7 +1,7 @@
 using System.Windows;
 using PowerTool.Models;
 
-namespace PowerTool
+namespace PowerTool.Views
 {
     public partial class ProgramListWindow : Window
     {

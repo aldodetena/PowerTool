@@ -5,7 +5,7 @@ using System.Windows;
 using PowerTool.Models;
 using PowerTool.Utilities;
 
-namespace PowerTool
+namespace PowerTool.Views
 {
     public partial class DomainWindow : Window
     {
