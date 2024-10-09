@@ -72,3 +72,10 @@ Estas son las principales bibliotecas utilizadas en el proyecto **PowerTool**:
      ```bash
      dotnet add package Microsoft.WSMan.Management --version 7.4.5
      ```
+
+11. **[System.DirectoryServices.AccountManagement](https://www.nuget.org/packages/system.directoryservices.accountmanagement/)**
+   - Proporciona acceso uniforme y manipulación de principios de seguridad en múltiples almacenes principales.
+   - Instalación:
+     ```bash
+     dotnet add package System.DirectoryServices.AccountManagement --version 8.0.1
+     ```

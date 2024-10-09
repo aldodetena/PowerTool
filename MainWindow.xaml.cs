@@ -608,6 +608,12 @@ namespace PowerTool
             }
         }
 
+        private void OpenUserManagementWindow_Click(object sender, RoutedEventArgs e)
+        {
+            UserManagementWindow userManagementWindow = new UserManagementWindow(selectedDomain);
+            userManagementWindow.Show();
+        }
+
         private void CerrarButton_Click(object sender, RoutedEventArgs e)
         {
             this.Close();

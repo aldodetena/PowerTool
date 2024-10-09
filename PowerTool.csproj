@@ -19,6 +19,7 @@
     <PackageReference Include="SkiaSharp.Views.WPF" Version="2.88.8" />
     <PackageReference Include="Svg.Skia" Version="2.0.0.1" />
     <PackageReference Include="System.DirectoryServices" Version="8.0.0" />
+    <PackageReference Include="System.DirectoryServices.AccountManagement" Version="8.0.1" />
     <PackageReference Include="System.Management" Version="8.0.0" />
     <PackageReference Include="System.Management.Automation" Version="7.4.5" />
   </ItemGroup>

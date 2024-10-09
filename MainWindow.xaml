@@ -123,6 +123,7 @@
 
         <!-- StackPanel para organizar botones de acciones principales en la última fila -->
         <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,10">
+            <Button Content="Gestión de Usuarios" Width="150" Height="30" Click="OpenUserManagementWindow_Click" Margin="0,0,10,0"/>
             <Button Content="Cerrar" Width="100" Height="30" Click="CerrarButton_Click" Margin="0,0,10,0"/>
         </StackPanel>
     </Grid>
