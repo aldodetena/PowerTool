@@ -1,0 +1,30 @@
+<Window x:Class="PowerTool.Views.RemoteTaskManagerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Administrador de Tareas Remoto" Height="400" Width="600">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- ListView para mostrar procesos -->
+        <ListView Name="ProcessListView" Grid.Row="0" Margin="10" ItemsSource="{Binding Processes}">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="ID" DisplayMemberBinding="{Binding ProcessId}" Width="50"/>
+                    <GridViewColumn Header="Nombre" DisplayMemberBinding="{Binding Name}" Width="200"/>
+                    <GridViewColumn Header="Uso de CPU (%)" DisplayMemberBinding="{Binding CPUUsage}" Width="100"/>
+                    <GridViewColumn Header="Memoria (MB)" DisplayMemberBinding="{Binding MemoryUsage}" Width="100"/>
+                </GridView>
+            </ListView.View>
+        </ListView>
+
+        <!-- Botones de acciones -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" Margin="10">
+            <Button Content="Refrescar" Width="100" Margin="5" Click="RefreshProcessList_Click"/>
+            <Button Content="Terminar Proceso" Width="150" Margin="5" Click="EndProcess_Click"/>
+            <Button Content="Cerrar" Width="100" Margin="5" Click="CloseButton_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

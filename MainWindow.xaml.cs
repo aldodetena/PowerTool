@@ -49,24 +49,31 @@ namespace PowerTool
             usuarioTimer.Elapsed += ActualizarUsuarios;
             usuarioTimer.Start();
 
-             // Cargar los SVGs
-            svgComputer = new SKSvg();
-            svgComputer.Load(Path.Combine("Icons", "computer.svg"));
+            // Cargar los SVGs
+            try {
+                svgComputer = new SKSvg();
+                svgComputer.Load(Path.Combine("Icons", "computer.svg"));
 
-            svgScript = new SKSvg();
-            svgScript.Load(Path.Combine("Icons", "script.svg"));
+                svgScript = new SKSvg();
+                svgScript.Load(Path.Combine("Icons", "script.svg"));
 
-            svgRemote = new SKSvg();
-            svgRemote.Load(Path.Combine("Icons", "remote.svg"));
+                svgRemote = new SKSvg();
+                svgRemote.Load(Path.Combine("Icons", "remote.svg"));
 
-            svgFolder = new SKSvg();
-            svgFolder.Load(Path.Combine("Icons", "folder.svg"));
+                svgFolder = new SKSvg();
+                svgFolder.Load(Path.Combine("Icons", "folder.svg"));
 
-            svgPrograms = new SKSvg();
-            svgPrograms.Load(Path.Combine("Icons", "programs.svg"));
+                svgPrograms = new SKSvg();
+                svgPrograms.Load(Path.Combine("Icons", "programs.svg"));
 
-            svgServices = new SKSvg();
-            svgServices.Load(Path.Combine("Icons", "services.svg"));
+                svgServices = new SKSvg();
+                svgServices.Load(Path.Combine("Icons", "services.svg"));
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("Error al cargar los SVG", ex);
+            }
+            
 
             equipos = new ObservableCollection<Equipo>();
             EquiposListView.ItemsSource = equipos;
@@ -476,6 +483,101 @@ namespace PowerTool
             return servicios;
         }
 
+        public ObservableCollection<RemoteProcess> ObtenerProcesosRemotos(string remoteMachineName)
+        {
+            ObservableCollection<RemoteProcess> procesos = new ObservableCollection<RemoteProcess>();
+            try
+            {
+                string password = EncryptionHelper.DecryptString(selectedDomain.EncryptedPassword);
+                var scope = CrearScope(remoteMachineName, password);
+
+                if (!scope.IsConnected)
+                {
+                    Logger.LogError($"No se pudo conectar al equipo {remoteMachineName} para obtener los procesos.", null);
+                    MessageBox.Show($"No se pudo conectar al equipo {remoteMachineName}. Consulte el log para más detalles.");
+                    return procesos;
+                }
+
+                var query = new ObjectQuery("SELECT ProcessId, Name, WorkingSetSize FROM Win32_Process");
+                var searcher = new ManagementObjectSearcher(scope, query);
+                var processCollection = searcher.Get();
+
+                if (processCollection.Count == 0)
+                {
+                    MessageBox.Show($"No se encontraron procesos en {remoteMachineName}. Esto podría deberse a permisos insuficientes o configuración de WMI.");
+                    return procesos;
+                }
+
+                foreach (ManagementObject process in processCollection)
+                {
+                    var remoteProcess = new RemoteProcess
+                    {
+                        ProcessId = (int)(uint)process["ProcessId"],
+                        Name = process["Name"]?.ToString(),
+                        MemoryUsage = Convert.ToDouble(process["WorkingSetSize"]) / (1024 * 1024) // Convertir a MB
+                    };
+                    procesos.Add(remoteProcess);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError($"Error al obtener procesos de {remoteMachineName}", ex);
+                MessageBox.Show($"Error al obtener los procesos de {remoteMachineName}. Consulte el log para más detalles.");
+            }
+            return procesos;
+        }
+
+        public void TerminarProcesoRemoto(string remoteMachineName, int processId)
+        {
+            try
+            {
+                string password = EncryptionHelper.DecryptString(selectedDomain.EncryptedPassword);
+                var scope = CrearScope(remoteMachineName, password);
+
+                var process = new ManagementObject(scope, new ManagementPath($"Win32_Process.Handle='{processId}'"), null);
+                process.InvokeMethod("Terminate", null);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError($"Error al terminar el proceso {processId} en {remoteMachineName}", ex);
+                MessageBox.Show("Error al terminar el proceso. Consulte el log para más detalles.");
+            }
+        }
+
+        private ManagementScope CrearScope(string remoteMachineName, string decryptedPassword)
+        {
+            var options = new ConnectionOptions
+            {
+                Username = selectedDomain.Username,
+                Password = decryptedPassword,
+                Impersonation = ImpersonationLevel.Impersonate,
+                Authentication = AuthenticationLevel.PacketPrivacy
+            };
+
+            var scope = new ManagementScope($@"\\{remoteMachineName}\root\cimv2", options);
+            try
+            {
+                scope.Connect();
+                if (!scope.IsConnected)
+                {
+                    Logger.LogError($"Error al conectar al equipo remoto: {remoteMachineName}", null);
+                    MessageBox.Show($"Error al conectar al equipo {remoteMachineName}. Verifique las credenciales y permisos.");
+                }
+            }
+            catch (UnauthorizedAccessException uae)
+            {
+                Logger.LogError($"Acceso denegado al conectar con {remoteMachineName}", uae);
+                MessageBox.Show("Acceso denegado. Asegúrese de que las credenciales y permisos son correctos.");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError($"Error al conectar con {remoteMachineName}", ex);
+                MessageBox.Show("No se pudo conectar al equipo remoto. Consulte el log para más detalles.");
+            }
+
+            return scope;
+        }
+
         private async Task<DateTime> ObtenerUltimoInicioSesion(string nombreEquipo, List<string> controladoresDeDominio)
         {
             DateTime ultimoInicioSesion = DateTime.MinValue;
@@ -531,16 +633,20 @@ namespace PowerTool
             return ultimoInicioSesion;
         }
 
-        private void AbrirExploradorArchivos(string nombreEquipo)
+        private void AbrirExploradorArchivos_Click(object sender, RoutedEventArgs e)
         {
-            try
+            if (sender is Button button && button.DataContext is Equipo equipoSeleccionado)
             {
-                string ruta = $@"\\{nombreEquipo}\C$";
-                System.Diagnostics.Process.Start("explorer.exe", ruta);
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError($"Error al intentar acceder al sistema de archivos de {nombreEquipo}", ex);
+                try
+                {
+                    string ruta = $@"\\{equipoSeleccionado.Name}\C$";
+                    System.Diagnostics.Process.Start("explorer.exe", ruta);
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError($"Error al intentar acceder al sistema de archivos de {equipoSeleccionado.Name}", ex);
+                    MessageBox.Show("Error al intentar abrir el explorador de archivos. Consulte el log para más detalles.");
+                }
             }
         }
 
@@ -551,14 +657,6 @@ namespace PowerTool
                 // Crear y mostrar un PopUp para ingresar el comando
                 CommandWindow commandWindow = new CommandWindow(equipoSeleccionado);
                 commandWindow.ShowDialog(); // Mostrar el PopUp de forma modal
-            }
-        }
-
-        private void AbrirExploradorArchivos_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is Button button && button.DataContext is Equipo equipoSeleccionado)
-            {
-                AbrirExploradorArchivos(equipoSeleccionado.Name);
             }
         }
 
@@ -605,6 +703,15 @@ namespace PowerTool
                 // Mostrar los servicios en una nueva ventana
                 ServiceListWindow serviceListWindow = new ServiceListWindow(servicios, equipoSeleccionado.Name);
                 serviceListWindow.Show();
+            }
+        }
+
+        private void RemoteTaskManager_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.DataContext is Equipo equipoSeleccionado)
+            {
+                var taskManagerWindow = new RemoteTaskManagerWindow(equipoSeleccionado.Name, this);
+                taskManagerWindow.Show();
             }
         }
 
