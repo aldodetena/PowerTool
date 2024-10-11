@@ -16,6 +16,7 @@ using System.IO;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Timers;
+using System.Diagnostics;
 
 namespace PowerTool
 {
@@ -27,6 +28,8 @@ namespace PowerTool
         private readonly SKSvg svgFolder;
         private readonly SKSvg svgPrograms;
         private readonly SKSvg svgServices;
+        private readonly SKSvg svgEventLog;
+        private readonly SKSvg svgTask;
         private readonly object equiposLock = new object();
         private ObservableCollection<Equipo> equipos;
         private System.Timers.Timer pingTimer;
@@ -68,6 +71,12 @@ namespace PowerTool
 
                 svgServices = new SKSvg();
                 svgServices.Load(Path.Combine("Icons", "services.svg"));
+
+                svgEventLog = new SKSvg();
+                svgEventLog.Load(Path.Combine("Icons", "services.svg"));
+
+                svgTask = new SKSvg();
+                svgTask.Load(Path.Combine("Icons", "services.svg"));
             }
             catch (Exception ex)
             {
@@ -139,6 +148,20 @@ namespace PowerTool
             var canvas = e.Surface.Canvas;
             canvas.Clear(SKColors.Transparent);
             canvas.DrawPicture(svgServices.Picture);
+        }
+
+        private void OnPaintSurfaceTask(object sender, SKPaintSurfaceEventArgs e)
+        {
+            var canvas = e.Surface.Canvas;
+            canvas.Clear(SKColors.Transparent);
+            canvas.DrawPicture(svgTask.Picture);
+        }
+
+        private void OnPaintSurfaceEventLog(object sender, SKPaintSurfaceEventArgs e)
+        {
+            var canvas = e.Surface.Canvas;
+            canvas.Clear(SKColors.Transparent);
+            canvas.DrawPicture(svgEventLog.Picture);
         }
 
         private List<string> ObtenerControladoresDeDominio()
@@ -578,6 +601,49 @@ namespace PowerTool
             return scope;
         }
 
+        private List<RemoteEventLogEntry> ObtenerEventosRemotos(string nombreEquipo, DateTime startTime, DateTime endTime)
+        {
+            List<RemoteEventLogEntry> eventos = new List<RemoteEventLogEntry>();
+
+            try
+            {
+                string password = EncryptionHelper.DecryptString(selectedDomain.EncryptedPassword);
+                var scope = CrearScope(nombreEquipo, password);
+
+                if (!scope.IsConnected)
+                {
+                    MessageBox.Show($"No se pudo conectar al equipo {nombreEquipo}. Consulte el log para más detalles.");
+                    return eventos;
+                }
+
+                // Filtrar eventos de tipo Error (2) o Crítico (1)
+                string queryStr = $"SELECT * FROM Win32_NTLogEvent WHERE Logfile = 'System' AND EventType <= 2 AND " +
+                                $"TimeGenerated >= '{ManagementDateTimeConverter.ToDmtfDateTime(startTime)}' AND " +
+                                $"TimeGenerated <= '{ManagementDateTimeConverter.ToDmtfDateTime(endTime)}'";
+
+                ObjectQuery query = new ObjectQuery(queryStr);
+                ManagementObjectSearcher searcher = new ManagementObjectSearcher(scope, query);
+
+                foreach (ManagementObject evt in searcher.Get())
+                {
+                    var logEntry = new RemoteEventLogEntry
+                    {
+                        Source = evt["SourceName"]?.ToString(),
+                        EventType = evt["EventType"]?.ToString(),
+                        TimeGenerated = ManagementDateTimeConverter.ToDateTime(evt["TimeGenerated"].ToString()),
+                        Message = evt["Message"]?.ToString()
+                    };
+                    eventos.Add(logEntry);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError($"Error al obtener eventos remotos de {nombreEquipo}", ex);
+            }
+
+            return eventos;
+        }
+
         private async Task<DateTime> ObtenerUltimoInicioSesion(string nombreEquipo, List<string> controladoresDeDominio)
         {
             DateTime ultimoInicioSesion = DateTime.MinValue;
@@ -719,6 +785,22 @@ namespace PowerTool
         {
             UserManagementWindow userManagementWindow = new UserManagementWindow(selectedDomain);
             userManagementWindow.Show();
+        }
+
+        private void OpenRemoteEventLog_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.DataContext is Equipo equipoSeleccionado)
+            {
+                var eventos = ObtenerEventosRemotos(equipoSeleccionado.Name, DateTime.Now.AddDays(-7), DateTime.Now);
+                var observableEventos = new ObservableCollection<RemoteEventLogEntry>(eventos);
+
+                var eventLogWindow = new RemoteEventLogWindow(observableEventos);
+                eventLogWindow.Show();
+            }
+            else
+            {
+                MessageBox.Show("Por favor, selecciona un equipo para ver los eventos.");
+            }
         }
 
         private void CerrarButton_Click(object sender, RoutedEventArgs e)
