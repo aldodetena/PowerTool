@@ -16,7 +16,6 @@ using System.IO;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Timers;
-using System.Diagnostics;
 
 namespace PowerTool
 {
@@ -644,6 +643,97 @@ namespace PowerTool
             return eventos;
         }
 
+        public List<RegistryEntry> ObtenerClavesRegistroRemoto(string remoteMachineName, string registryKey, DomainInfo domainInfo)
+        {
+            List<RegistryEntry> registryEntries = new List<RegistryEntry>();
+            try
+            {
+                string decryptedPassword = EncryptionHelper.DecryptString(domainInfo.EncryptedPassword);
+                ManagementScope scope = CrearScope(remoteMachineName, decryptedPassword);
+                ManagementClass registry = new ManagementClass(scope, new ManagementPath("StdRegProv"), null);
+
+                const uint HKEY_LOCAL_MACHINE = 0x80000002;
+
+                // Obtiene los valores en la clave de registro especificada
+                var inParams = registry.GetMethodParameters("EnumValues");
+                inParams["hDefKey"] = HKEY_LOCAL_MACHINE;
+                inParams["sSubKeyName"] = registryKey;
+
+                var outParams = registry.InvokeMethod("EnumValues", inParams, null);
+
+                if (outParams["sNames"] is string[] valueNames)
+                {
+                    foreach (string valueName in valueNames)
+                    {
+                        var inParamsGet = registry.GetMethodParameters("GetStringValue");
+                        inParamsGet["hDefKey"] = HKEY_LOCAL_MACHINE;
+                        inParamsGet["sSubKeyName"] = registryKey;
+                        inParamsGet["sValueName"] = valueName;
+
+                        var outParamsGet = registry.InvokeMethod("GetStringValue", inParamsGet, null);
+                        string value = outParamsGet["sValue"]?.ToString() ?? string.Empty;
+
+                        registryEntries.Add(new RegistryEntry
+                        {
+                            Key = valueName,
+                            Value = value
+                        });
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError($"Error al obtener las claves de registro del equipo remoto {remoteMachineName} en {registryKey}", ex);
+            }
+            return registryEntries;
+        }
+
+        public bool EliminarClaveRegistroRemoto(string remoteMachineName, string subKey)
+        {
+            try
+            {
+                string decryptedPassword = EncryptionHelper.DecryptString(selectedDomain.EncryptedPassword);
+                ManagementScope scope = CrearScope(remoteMachineName, decryptedPassword);
+                ManagementClass registry = new ManagementClass(scope, new ManagementPath("StdRegProv"), null);
+
+                var inParams = registry.GetMethodParameters("DeleteKey");
+                inParams["hDefKey"] = 0x80000002; // HKEY_LOCAL_MACHINE
+                inParams["sSubKeyName"] = subKey;
+
+                registry.InvokeMethod("DeleteKey", inParams, null);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError($"Error al eliminar la clave de registro {subKey} en {remoteMachineName}", ex);
+                return false;
+            }
+        }
+
+        public bool EditarValorRegistroRemoto(string remoteMachineName, string subKey, string valueName, string newValue)
+        {
+            try
+            {
+                string decryptedPassword = EncryptionHelper.DecryptString(selectedDomain.EncryptedPassword);
+                ManagementScope scope = CrearScope(remoteMachineName, decryptedPassword);
+                ManagementClass registry = new ManagementClass(scope, new ManagementPath("StdRegProv"), null);
+
+                var inParams = registry.GetMethodParameters("SetStringValue");
+                inParams["hDefKey"] = 0x80000002; // HKEY_LOCAL_MACHINE
+                inParams["sSubKeyName"] = subKey;
+                inParams["sValueName"] = valueName;
+                inParams["sValue"] = newValue;
+
+                registry.InvokeMethod("SetStringValue", inParams, null);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError($"Error al editar el valor de registro {valueName} en {remoteMachineName}", ex);
+                return false;
+            }
+        }
+
         private async Task<DateTime> ObtenerUltimoInicioSesion(string nombreEquipo, List<string> controladoresDeDominio)
         {
             DateTime ultimoInicioSesion = DateTime.MinValue;
@@ -781,10 +871,18 @@ namespace PowerTool
             }
         }
 
-        private void OpenUserManagementWindow_Click(object sender, RoutedEventArgs e)
+        private void OpenRemoteRegistryEditor_Click(object sender, RoutedEventArgs e)
         {
-            UserManagementWindow userManagementWindow = new UserManagementWindow(selectedDomain);
-            userManagementWindow.Show();
+            if (sender is Button button && button.DataContext is Equipo equipoSeleccionado)
+            {
+                // Carga y muestra la ventana del editor de registro remoto
+                var registryEditorWindow = new RemoteRegistryEditorWindow(equipoSeleccionado.Name, selectedDomain, this);
+                registryEditorWindow.Show();
+            }
+            else
+            {
+                MessageBox.Show("Seleccione un equipo para ver y editar el registro.");
+            }
         }
 
         private void OpenRemoteEventLog_Click(object sender, RoutedEventArgs e)
@@ -801,6 +899,12 @@ namespace PowerTool
             {
                 MessageBox.Show("Por favor, selecciona un equipo para ver los eventos.");
             }
+        }
+
+        private void OpenUserManagementWindow_Click(object sender, RoutedEventArgs e)
+        {
+            UserManagementWindow userManagementWindow = new UserManagementWindow(selectedDomain);
+            userManagementWindow.Show();
         }
 
         private void CerrarButton_Click(object sender, RoutedEventArgs e)

@@ -88,7 +88,7 @@
                     <GridViewColumn Header="MAC Address" DisplayMemberBinding="{Binding MACAddress}" Width="150"/>
 
                     <!-- Columna para botones de acciones -->
-                    <GridViewColumn Header="Acciones" Width="200">
+                    <GridViewColumn Header="Acciones" Width="250">
                         <GridViewColumn.CellTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -117,7 +117,11 @@
                                         <skia:SKElement Width="16" Height="16" PaintSurface="OnPaintSurfaceTask"/>
                                     </Button>
                                     <!-- Botón para ver el visor de eventos -->
-                                    <Button Click="OpenRemoteEventLog_Click" ToolTip="Ver Visor de Eventos" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <Button Click="OpenRemoteEventLog_Click" ToolTip="Ver Visor de Eventos" Margin="0,0,10,0" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <skia:SKElement Width="16" Height="16" PaintSurface="OnPaintSurfaceEventLog"/>
+                                    </Button>
+                                    <!-- Botón para acceder al Editor de Registro Remoto -->
+                                    <Button Click="OpenRemoteRegistryEditor_Click" ToolTip="Editar Registro Remoto" HorizontalAlignment="Center" VerticalAlignment="Center">
                                         <skia:SKElement Width="16" Height="16" PaintSurface="OnPaintSurfaceEventLog"/>
                                     </Button>
                                 </StackPanel>
