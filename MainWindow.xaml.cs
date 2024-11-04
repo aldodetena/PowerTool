@@ -889,8 +889,7 @@ namespace PowerTool
             {
                 List<ServiceInfo> servicios = ObtenerServiciosEnEjecucion(equipoSeleccionado.Name, selectedDomain);
 
-                // Mostrar los servicios en una nueva ventana
-                ServiceListWindow serviceListWindow = new ServiceListWindow(servicios, equipoSeleccionado.Name);
+                ServiceListWindow serviceListWindow = new ServiceListWindow(servicios, equipoSeleccionado.Name, selectedDomain);
                 serviceListWindow.Show();
             }
         }

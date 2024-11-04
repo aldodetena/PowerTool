@@ -3,7 +3,13 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Servicios en Ejecución" Height="400" Width="800">
     <Grid>
-        <DataGrid ItemsSource="{Binding}" AutoGenerateColumns="False" Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <!-- DataGrid para mostrar servicios -->
+        <DataGrid Name="ServiceListView" ItemsSource="{Binding Servicios}" AutoGenerateColumns="False" Margin="10" Grid.Row="0">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Nombre" Binding="{Binding Name}" Width="*"/>
                 <DataGridTextColumn Header="Nombre para Mostrar" Binding="{Binding DisplayName}" Width="*"/>
@@ -11,5 +17,12 @@
                 <DataGridTextColumn Header="Modo de Inicio" Binding="{Binding StartMode}" Width="*"/>
             </DataGrid.Columns>
         </DataGrid>
+
+        <!-- Botones de control de servicios -->
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="10" Grid.Row="1">
+            <Button Content="Iniciar" Width="100" Margin="5" Click="IniciarServicio_Click"/>
+            <Button Content="Detener" Width="100" Margin="5" Click="DetenerServicio_Click"/>
+            <Button Content="Reiniciar" Width="100" Margin="5" Click="ReiniciarServicio_Click"/>
+        </StackPanel>
     </Grid>
 </Window>
