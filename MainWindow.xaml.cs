@@ -822,6 +822,76 @@ namespace PowerTool
             return ultimoInicioSesion;
         }
 
+        public async Task<ObservableCollection<HardwareInfo>> ObtenerInventarioHardwareAsync(List<Equipo> equipos)
+        {
+            var inventario = new ObservableCollection<HardwareInfo>();
+
+            await Task.Run(() =>
+            {
+                foreach (var equipo in equipos)
+                {
+                    try
+                    {
+                        var scope = CrearScope(equipo.Name, EncryptionHelper.DecryptString(selectedDomain.EncryptedPassword));
+
+                        // Información de CPU
+                        var cpuQuery = new ObjectQuery("SELECT Name, NumberOfCores, MaxClockSpeed FROM Win32_Processor");
+                        var cpuSearcher = new ManagementObjectSearcher(scope, cpuQuery);
+                        string cpuNombre = "";
+                        string cpuDetalles = "";
+
+                        foreach (ManagementObject cpu in cpuSearcher.Get())
+                        {
+                            cpuNombre = cpu["Name"]?.ToString();
+                            cpuDetalles = $"Cores: {cpu["NumberOfCores"]}, Max Speed: {cpu["MaxClockSpeed"]} MHz";
+                        }
+
+                        // Información de RAM
+                        var ramQuery = new ObjectQuery("SELECT Capacity FROM Win32_PhysicalMemory");
+                        var ramSearcher = new ManagementObjectSearcher(scope, ramQuery);
+                        double totalRam = 0;
+                        foreach (ManagementObject ram in ramSearcher.Get())
+                        {
+                            totalRam += Convert.ToDouble(ram["Capacity"]) / (1024 * 1024 * 1024); // Sumar la RAM de cada módulo
+                        }
+                        totalRam = Math.Round(totalRam, 2);
+
+                        // Información de Disco
+                        var diskQuery = new ObjectQuery("SELECT DeviceID, Size, FreeSpace FROM Win32_LogicalDisk WHERE DriveType=3");
+                        var diskSearcher = new ManagementObjectSearcher(scope, diskQuery);
+                        double totalDiskSpace = 0;
+                        double freeDiskSpace = 0;
+
+                        foreach (ManagementObject disk in diskSearcher.Get())
+                        {
+                            totalDiskSpace += Math.Round(Convert.ToDouble(disk["Size"]) / (1024 * 1024 * 1024), 2); // GB
+                            freeDiskSpace += Math.Round(Convert.ToDouble(disk["FreeSpace"]) / (1024 * 1024 * 1024), 2); // GB
+                        }
+
+                        // Crear el objeto de información de hardware
+                        var hardwareInfo = new HardwareInfo
+                        {
+                            MachineName = equipo.Name,
+                            Cpu = cpuNombre,
+                            CpuDetails = cpuDetalles,
+                            RamInGB = totalRam,
+                            DiskSpaceInGB = totalDiskSpace,
+                            DiskFreeSpaceInGB = freeDiskSpace
+                        };
+
+                        // Añadir al inventario en el hilo de la interfaz de usuario
+                        App.Current.Dispatcher.Invoke(() => inventario.Add(hardwareInfo));
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.LogError($"Error al obtener inventario de hardware para {equipo.Name}", ex);
+                    }
+                }
+            });
+
+            return inventario;
+        }
+
         private void AbrirExploradorArchivos_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button button && button.DataContext is Equipo equipoSeleccionado)
@@ -936,6 +1006,14 @@ namespace PowerTool
                 MessageBox.Show("Por favor, selecciona un equipo de la lista.");
             }
         }
+
+        private async void VerInventarioHardware_Click(object sender, RoutedEventArgs e)
+        {
+            var hardwareInfos = await ObtenerInventarioHardwareAsync(equipos.ToList()); // Espera la recopilación en segundo plano
+            var hardwareInventoryWindow = new HardwareInventoryWindow(hardwareInfos);   // Pasa los datos a la ventana
+            hardwareInventoryWindow.Show();
+        }
+
         private void CerrarButton_Click(object sender, RoutedEventArgs e)
         {
             this.Close();

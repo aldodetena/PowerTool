@@ -1,0 +1,19 @@
+<Window x:Class="PowerTool.Views.HardwareInventoryWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Inventario de Hardware" Height="400" Width="700">
+    <Grid>
+        <ListView Name="HardwareListView" Margin="10">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="Equipo" DisplayMemberBinding="{Binding MachineName}" Width="150"/>
+                    <GridViewColumn Header="CPU" DisplayMemberBinding="{Binding Cpu}" Width="150"/>
+                    <GridViewColumn Header="Detalles CPU" DisplayMemberBinding="{Binding CpuDetails}" Width="200"/>
+                    <GridViewColumn Header="RAM (GB)" DisplayMemberBinding="{Binding RamInGB}" Width="100"/>
+                    <GridViewColumn Header="Espacio en Disco (GB)" DisplayMemberBinding="{Binding DiskSpaceInGB}" Width="150"/>
+                    <GridViewColumn Header="Espacio Libre en Disco (GB)" DisplayMemberBinding="{Binding DiskFreeSpaceInGB}" Width="150"/>
+                </GridView>
+            </ListView.View>
+        </ListView>
+    </Grid>
+</Window>
