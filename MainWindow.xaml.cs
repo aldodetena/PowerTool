@@ -16,6 +16,9 @@ using System.IO;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Timers;
+using Microsoft.Win32;
+using System.Management.Automation;
+using System.Management.Automation.Runspaces;
 
 namespace PowerTool
 {
@@ -643,6 +646,127 @@ namespace PowerTool
             return eventos;
         }
 
+        private void TransferirEInstalarArchivo(Equipo equipoSeleccionado)
+        {
+            // Seleccionar archivo local
+            OpenFileDialog openFileDialog = new OpenFileDialog
+            {
+                Title = "Selecciona el archivo de instalación",
+                Filter = "Archivos ejecutables (*.exe)|*.exe|Todos los archivos (*.*)|*.*"
+            };
+
+            if (openFileDialog.ShowDialog() != true)
+            {
+                MessageBox.Show("No se seleccionó ningún archivo.");
+                return;
+            }
+
+            string localPath = openFileDialog.FileName;
+
+            // Definir ruta remota fija
+            string remoteDirectory = @"C:\temp";
+            string remotePath = $"{remoteDirectory}\\{Path.GetFileName(localPath)}";
+
+            try
+            {
+                string remoteMachine = equipoSeleccionado.Name;
+                string username = selectedDomain.Username;
+                string password = EncryptionHelper.DecryptString(selectedDomain.EncryptedPassword);
+
+                using (PowerShell ps = PowerShell.Create())
+                {
+                    // Crear la sesión remota
+                    ps.AddScript($@"
+                        $securePassword = ConvertTo-SecureString '{password}' -AsPlainText -Force
+                        $credential = New-Object System.Management.Automation.PSCredential ('{username}', $securePassword)
+                        $session = New-PSSession -ComputerName '{remoteMachine}' -Credential $credential
+                        $session
+                    ");
+
+                    var results = ps.Invoke();
+                    if (ps.HadErrors || results == null || results.Count == 0)
+                    {
+                        string errorMessages = "Error al crear la sesión remota:\n";
+                        foreach (var error in ps.Streams.Error)
+                        {
+                            errorMessages += $"{error.Exception.Message}\n";
+                        }
+
+                        MessageBox.Show(errorMessages);
+                        return;
+                    }
+
+                    var session = results[0];
+
+                    // Asegurarse de que el directorio remoto existe
+                    ps.Commands.Clear();
+                    ps.AddScript($"Invoke-Command -Session $session -ScriptBlock {{ if (!(Test-Path -Path '{remoteDirectory}')) {{ New-Item -ItemType Directory -Path '{remoteDirectory}' }} }}");
+                    ps.Invoke();
+
+                    if (ps.HadErrors)
+                    {
+                        string errorMessages = "Error al crear el directorio remoto:\n";
+                        foreach (var error in ps.Streams.Error)
+                        {
+                            errorMessages += $"{error.Exception.Message}\n";
+                        }
+
+                        MessageBox.Show(errorMessages);
+                        return;
+                    }
+
+                    // Transferir el archivo
+                    ps.Commands.Clear();
+                    ps.AddScript($"Copy-Item -Path '{localPath}' -Destination '{remotePath}' -ToSession $session");
+                    ps.Invoke();
+
+                    if (ps.HadErrors)
+                    {
+                        string errorMessages = "Error al transferir archivo:\n";
+                        foreach (var error in ps.Streams.Error)
+                        {
+                            errorMessages += $"{error.Exception.Message}\n";
+                        }
+
+                        MessageBox.Show(errorMessages);
+                        return;
+                    }
+
+                    MessageBox.Show("Archivo transferido exitosamente a C:\\temp. Iniciando instalación...");
+
+                    // Ejecutar el instalador como trabajo en segundo plano
+                    ps.Commands.Clear();
+                    ps.AddScript($"Invoke-Command -Session $session -ScriptBlock {{ Start-Process '{remotePath}' -ArgumentList '/S /V/qn' -Verb RunAs -Wait }} -AsJob");
+                    ps.Invoke();
+
+                    if (ps.HadErrors)
+                    {
+                        string errorMessages = "Error durante la instalación en el equipo remoto:\n";
+                        foreach (var error in ps.Streams.Error)
+                        {
+                            errorMessages += $"{error.Exception.Message}\n";
+                        }
+
+                        MessageBox.Show(errorMessages);
+                    }
+                    else
+                    {
+                        MessageBox.Show("Instalación completada exitosamente en el equipo remoto.");
+                    }
+
+                    // Cerrar la sesión remota
+                    ps.Commands.Clear();
+                    ps.AddScript("Remove-PSSession -Session $session");
+                    ps.Invoke();
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("Error al transferir e instalar archivo en el equipo remoto.", ex);
+                MessageBox.Show("Error en la transferencia o instalación. Verifica el log para más detalles.");
+            }
+        }
+
         private async Task<DateTime> ObtenerUltimoInicioSesion(string nombreEquipo, List<string> controladoresDeDominio)
         {
             DateTime ultimoInicioSesion = DateTime.MinValue;
@@ -802,6 +926,17 @@ namespace PowerTool
             userManagementWindow.Show();
         }
 
+        private void TransferirEInstalarArchivo_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.DataContext is Equipo equipoSeleccionado)
+            {
+                TransferirEInstalarArchivo(equipoSeleccionado);
+            }
+            else
+            {
+                MessageBox.Show("Por favor, selecciona un equipo de la lista.");
+            }
+        }
         private void CerrarButton_Click(object sender, RoutedEventArgs e)
         {
             this.Close();
