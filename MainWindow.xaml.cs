@@ -1009,8 +1009,8 @@ namespace PowerTool
 
         private async void VerInventarioHardware_Click(object sender, RoutedEventArgs e)
         {
-            var hardwareInfos = await ObtenerInventarioHardwareAsync(equipos.ToList()); // Espera la recopilación en segundo plano
-            var hardwareInventoryWindow = new HardwareInventoryWindow(hardwareInfos);   // Pasa los datos a la ventana
+            var hardwareInfos = await ObtenerInventarioHardwareAsync(equipos.ToList());
+            var hardwareInventoryWindow = new HardwareInventoryWindow(hardwareInfos);
             hardwareInventoryWindow.Show();
         }
 

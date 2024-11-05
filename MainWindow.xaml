@@ -63,10 +63,10 @@
                     <GridViewColumn Header="Equipo" Width="200">
                         <GridViewColumn.CellTemplate>
                             <DataTemplate>
-                                <StackPanel Orientation="Horizontal">
+                                <StackPanel Orientation="Horizontal"  VerticalAlignment="Center">
                                     <!-- Renderización de SVG usando SkiaSharp -->
                                     <skia:SKElement Width="16" Height="16" Margin="0,0,10,0" PaintSurface="OnPaintSurface"/>
-                                    <TextBlock Text="{Binding Name}"/>
+                                    <TextBlock Text="{Binding Name}"  VerticalAlignment="Center"/>
                                 </StackPanel>
                             </DataTemplate>
                         </GridViewColumn.CellTemplate>
