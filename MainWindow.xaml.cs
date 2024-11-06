@@ -892,9 +892,24 @@ namespace PowerTool
             return inventario;
         }
 
+        private void EquiposListView_ContextMenuOpening(object sender, ContextMenuEventArgs e)
+        {
+            if (EquiposListView.SelectedItem is Equipo equipoSeleccionado)
+            {
+                // Configurar el DataContext del ContextMenu con el equipo seleccionado
+                EquiposListView.ContextMenu.DataContext = equipoSeleccionado;
+            }
+            else
+            {
+                // Si no hay un equipo seleccionado, cancelar el menú contextual
+                e.Handled = true;
+                MessageBox.Show("Por favor, seleccione un equipo de la lista.");
+            }
+        }
+
         private void AbrirExploradorArchivos_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is Button button && button.DataContext is Equipo equipoSeleccionado)
+            if ((sender as MenuItem)?.DataContext is Equipo equipoSeleccionado)
             {
                 try
                 {
@@ -911,22 +926,19 @@ namespace PowerTool
 
         private void AbrirPopUpComando_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is Button button && button.DataContext is Equipo equipoSeleccionado)
+            if ((sender as MenuItem)?.DataContext is Equipo equipoSeleccionado)
             {
-                // Crear y mostrar un PopUp para ingresar el comando
                 CommandWindow commandWindow = new CommandWindow(equipoSeleccionado);
-                commandWindow.ShowDialog(); // Mostrar el PopUp de forma modal
+                commandWindow.ShowDialog();
             }
         }
 
         private void ConectarRDPButton_Click(object sender, RoutedEventArgs e)
         {
-            // Ahora requiere la selección explícita del equipo
-            if (sender is Button button && button.DataContext is Equipo equipoSeleccionado)
+            if ((sender as MenuItem)?.DataContext is Equipo equipoSeleccionado)
             {
                 try
                 {
-                    // Lanza la aplicación de escritorio remoto (RDP)
                     System.Diagnostics.Process.Start("mstsc", $"/v:{equipoSeleccionado.Name}");
                 }
                 catch (Exception ex)
@@ -935,19 +947,13 @@ namespace PowerTool
                     MessageBox.Show($"Error al intentar conectarse al equipo {equipoSeleccionado.Name} mediante RDP: {ex.Message}");
                 }
             }
-            else
-            {
-                MessageBox.Show("Por favor, selecciona un equipo de la lista.");
-            }
         }
 
         private void VerProgramasInstalados_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is Button button && button.DataContext is Equipo equipoSeleccionado)
+            if ((sender as MenuItem)?.DataContext is Equipo equipoSeleccionado)
             {
                 List<InstalledProgram> programas = ObtenerProgramasInstalados(equipoSeleccionado.Name, selectedDomain);
-
-                // Mostrar los programas en una nueva ventana
                 ProgramListWindow programListWindow = new ProgramListWindow(programas, equipoSeleccionado.Name);
                 programListWindow.Show();
             }
@@ -955,10 +961,9 @@ namespace PowerTool
 
         private void VerServiciosEnEjecucion_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is Button button && button.DataContext is Equipo equipoSeleccionado)
+            if ((sender as MenuItem)?.DataContext is Equipo equipoSeleccionado)
             {
                 List<ServiceInfo> servicios = ObtenerServiciosEnEjecucion(equipoSeleccionado.Name, selectedDomain);
-
                 ServiceListWindow serviceListWindow = new ServiceListWindow(servicios, equipoSeleccionado.Name, selectedDomain);
                 serviceListWindow.Show();
             }
@@ -966,7 +971,7 @@ namespace PowerTool
 
         private void RemoteTaskManager_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is Button button && button.DataContext is Equipo equipoSeleccionado)
+            if ((sender as MenuItem)?.DataContext is Equipo equipoSeleccionado)
             {
                 var taskManagerWindow = new RemoteTaskManagerWindow(equipoSeleccionado.Name, this);
                 taskManagerWindow.Show();
@@ -975,17 +980,20 @@ namespace PowerTool
 
         private void OpenRemoteEventLog_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is Button button && button.DataContext is Equipo equipoSeleccionado)
+            if ((sender as MenuItem)?.DataContext is Equipo equipoSeleccionado)
             {
                 var eventos = ObtenerEventosRemotos(equipoSeleccionado.Name, DateTime.Now.AddDays(-7), DateTime.Now);
                 var observableEventos = new ObservableCollection<RemoteEventLogEntry>(eventos);
-
                 var eventLogWindow = new RemoteEventLogWindow(observableEventos);
                 eventLogWindow.Show();
             }
-            else
+        }
+
+        private void TransferirEInstalarArchivo_Click(object sender, RoutedEventArgs e)
+        {
+            if ((sender as MenuItem)?.DataContext is Equipo equipoSeleccionado)
             {
-                MessageBox.Show("Por favor, selecciona un equipo para ver los eventos.");
+                TransferirEInstalarArchivo(equipoSeleccionado);
             }
         }
 
@@ -993,18 +1001,6 @@ namespace PowerTool
         {
             UserManagementWindow userManagementWindow = new UserManagementWindow(selectedDomain);
             userManagementWindow.Show();
-        }
-
-        private void TransferirEInstalarArchivo_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is Button button && button.DataContext is Equipo equipoSeleccionado)
-            {
-                TransferirEInstalarArchivo(equipoSeleccionado);
-            }
-            else
-            {
-                MessageBox.Show("Por favor, selecciona un equipo de la lista.");
-            }
         }
 
         private async void VerInventarioHardware_Click(object sender, RoutedEventArgs e)
