@@ -12,7 +12,7 @@
 
 ### 2. **Inventario de Hardware**
    - Obtiene información sobre la CPU, RAM y almacenamiento de los equipos.
-   - Visualización de inventario en una ventana dedicada con capacidad de exportación.
+   - Visualización de inventario en una ventana dedicada.
 
 ### 3. **Inventario de Software**
    - Muestra una lista detallada de programas instalados en equipos remotos.
