@@ -7,12 +7,24 @@ using PowerTool.Utilities;
 
 namespace PowerTool.Views
 {
+    /// <summary>
+    /// Representa una ventana para gestionar los dominios guardados y seleccionar uno.
+    /// </summary>
     public partial class DomainWindow : Window
     {
+        /// <summary>
+        /// Colección de dominios guardados.
+        /// </summary>
         public ObservableCollection<DomainInfo> SavedDomains { get; set; }
 
+        /// <summary>
+        /// El dominio seleccionado por el usuario.
+        /// </summary>
         public DomainInfo SelectedDomain { get; private set; }
 
+        /// <summary>
+        /// Inicializa una nueva instancia de <see cref="DomainWindow"/> y carga los dominios guardados.
+        /// </summary>
         public DomainWindow()
         {
             InitializeComponent();
@@ -20,6 +32,10 @@ namespace PowerTool.Views
             this.DataContext = this;
         }
 
+        /// <summary>
+        /// Carga los dominios guardados desde un archivo XML.
+        /// </summary>
+        /// <returns>Una colección de dominios cargados.</returns>
         private ObservableCollection<DomainInfo> LoadSavedDomains()
         {
             try
@@ -45,6 +61,9 @@ namespace PowerTool.Views
             }
         }
 
+        /// <summary>
+        /// Guarda la lista de dominios en un archivo XML.
+        /// </summary>
         private void SaveDomains()
         {
             try
@@ -61,6 +80,11 @@ namespace PowerTool.Views
             }
         }
 
+         /// <summary>
+        /// Maneja el evento de clic para añadir un nuevo dominio.
+        /// </summary>
+        /// <param name="sender">El botón que activó el evento.</param>
+        /// <param name="e">Datos del evento RoutedEventArgs.</param>
         private void AddDomain_Click(object sender, RoutedEventArgs e)
         {
             DomainEditWindow editWindow = new DomainEditWindow();
@@ -71,6 +95,11 @@ namespace PowerTool.Views
             }
         }
 
+        /// <summary>
+        /// Maneja el evento de clic para editar un dominio seleccionado.
+        /// </summary>
+        /// <param name="sender">El botón que activó el evento.</param>
+        /// <param name="e">Datos del evento RoutedEventArgs.</param>
         private void EditDomain_Click(object sender, RoutedEventArgs e)
         {
             if (DomainsListView.SelectedItem is DomainInfo domainInfo)
@@ -84,6 +113,11 @@ namespace PowerTool.Views
             }
         }
 
+        /// <summary>
+        /// Maneja el evento de clic para eliminar un dominio seleccionado.
+        /// </summary>
+        /// <param name="sender">El botón que activó el evento.</param>
+        /// <param name="e">Datos del evento RoutedEventArgs.</param>
         private void DeleteDomain_Click(object sender, RoutedEventArgs e)
         {
             if (DomainsListView.SelectedItem is DomainInfo domainInfo)
@@ -93,6 +127,11 @@ namespace PowerTool.Views
             }
         }
 
+        /// <summary>
+        /// Maneja el evento de clic para seleccionar un dominio de la lista.
+        /// </summary>
+        /// <param name="sender">El botón que activó el evento.</param>
+        /// <param name="e">Datos del evento RoutedEventArgs.</param>
         private void SelectDomain_Click(object sender, RoutedEventArgs e)
         {
             if (DomainsListView.SelectedItem is DomainInfo domainInfo)

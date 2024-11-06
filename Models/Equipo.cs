@@ -3,6 +3,10 @@ using System.ComponentModel;
 
 namespace PowerTool.Models
 {
+    /// <summary>
+    /// Representa un equipo dentro del dominio con propiedades como sistema operativo, estado de conexión, usuario actual, y direcciones IP/MAC.
+    /// Implementa INotifyPropertyChanged para notificar cambios en las propiedades.
+    /// </summary>
     public class Equipo : INotifyPropertyChanged
     {
         // Implementación de INotifyPropertyChanged

@@ -2,6 +2,10 @@ using System.ComponentModel;
 
 namespace PowerTool.Models
 {
+    /// <summary>
+    /// Representa una cuenta de usuario en el dominio con información sobre el estado, último inicio de sesión, y si está habilitada o bloqueada.
+    /// Implementa INotifyPropertyChanged para manejar cambios en las propiedades.
+    /// </summary>
     public class UserAccount : INotifyPropertyChanged
     {
         private string? _status;

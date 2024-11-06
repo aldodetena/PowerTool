@@ -7,11 +7,26 @@ using PowerTool.Services;
 
 namespace PowerTool.Views
 {
+    /// <summary>
+    /// Ventana de gestión de usuarios del dominio.
+    /// Permite listar, habilitar/deshabilitar, desbloquear y restablecer contraseñas de cuentas de usuario.
+    /// </summary>
     public partial class UserManagementWindow : Window
     {
+        /// <summary>
+        /// Información del dominio seleccionado utilizada para las operaciones con usuarios.
+        /// </summary>
         private DomainInfo _selectedDomain;
+        /// <summary>
+        /// Colección observable de cuentas de usuario obtenidas del dominio.
+        /// Permite la actualización dinámica de la interfaz de usuario.
+        /// </summary>
         public ObservableCollection<UserAccount> UserAccounts { get; set; }
 
+        /// <summary>
+        /// Constructor que inicializa la ventana con el dominio seleccionado y carga los usuarios del mismo.
+        /// </summary>
+        /// <param name="selectedDomain">Información del dominio seleccionado.</param>
         public UserManagementWindow(DomainInfo selectedDomain)
         {
             InitializeComponent();
@@ -21,6 +36,9 @@ namespace PowerTool.Views
             LoadUsers();
         }
 
+        /// <summary>
+        /// Carga y lista las cuentas de usuario del dominio.
+        /// </summary>
         private void LoadUsers()
         {
             try
@@ -60,6 +78,9 @@ namespace PowerTool.Views
             }
         }
 
+        /// <summary>
+        /// Cambia el estado de activación de un usuario seleccionado (activar/desactivar).
+        /// </summary>
         private void ToggleEnable_Click(object sender, RoutedEventArgs e)
         {
             if (UserListView.SelectedItem is UserAccount selectedUser)
@@ -97,6 +118,9 @@ namespace PowerTool.Views
             }
         }
 
+        /// <summary>
+        /// Desbloquea la cuenta de un usuario bloqueado.
+        /// </summary>
         private void UnlockUser_Click(object sender, RoutedEventArgs e)
         {
             if (UserListView.SelectedItem is UserAccount selectedUser)
@@ -133,6 +157,9 @@ namespace PowerTool.Views
             }
         }
 
+        /// <summary>
+        /// Restablece la contraseña de un usuario seleccionado tras solicitar la nueva contraseña.
+        /// </summary>
         private void ResetPassword_Click(object sender, RoutedEventArgs e)
         {
             if (UserListView.SelectedItem is UserAccount selectedUser)
@@ -175,6 +202,9 @@ namespace PowerTool.Views
             }
         }
 
+        /// <summary>
+        /// Filtra la lista de usuarios según el texto ingresado en el cuadro de búsqueda.
+        /// </summary>
         private void UserSearchBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
         {
             if (string.IsNullOrWhiteSpace(UserSearchBox.Text))
@@ -188,6 +218,9 @@ namespace PowerTool.Views
             }
         }
 
+        /// <summary>
+        /// Cierra la ventana de gestión de usuarios.
+        /// </summary>
         private void CloseButton_Click(object sender, RoutedEventArgs e)
         {
             this.Close();

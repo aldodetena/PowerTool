@@ -2,10 +2,18 @@ using System.IO;
 
 namespace PowerTool.Utilities
 {
+    /// <summary>
+    /// Proporciona funcionalidad para registrar mensajes de error en un archivo de log.
+    /// </summary>
     public static class Logger
     {
         private static readonly string logFilePath = "PowerToolLogs.log";
 
+        /// <summary>
+        /// Registra un mensaje de error junto con la excepción en un archivo de log.
+        /// </summary>
+        /// <param name="message">El mensaje de error descriptivo.</param>
+        /// <param name="ex">La excepción asociada al error.</param>
         public static void LogError(string message, Exception ex)
         {
             try

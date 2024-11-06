@@ -18,7 +18,6 @@ using System.Windows.Media;
 using System.Timers;
 using Microsoft.Win32;
 using System.Management.Automation;
-using System.Management.Automation.Runspaces;
 
 namespace PowerTool
 {
@@ -42,6 +41,11 @@ namespace PowerTool
         private int usersOnlineCount = 0;
         private int usersOfflineCount = 0;
 
+        /// <summary>
+        /// Constructor de la clase MainWindow.
+        /// Inicializa los componentes de la ventana y configura los temporizadores para el ping y la actualización de usuarios.
+        /// Carga los iconos SVG y solicita la selección de un dominio.
+        /// </summary>
         public MainWindow()
         {
             InitializeComponent();
@@ -105,67 +109,10 @@ namespace PowerTool
             }
         }
 
-        private void SearchBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
-        {
-            CollectionViewSource.GetDefaultView(EquiposListView.ItemsSource).Refresh();
-        }
-
-        private void OnPaintSurface(object sender, SKPaintSurfaceEventArgs e)
-        {
-            var canvas = e.Surface.Canvas;
-            canvas.Clear(SKColors.Transparent);
-            canvas.DrawPicture(svgComputer.Picture);
-        }
-
-        private void OnPaintSurfaceScript(object sender, SKPaintSurfaceEventArgs e)
-        {
-            var canvas = e.Surface.Canvas;
-            canvas.Clear(SKColors.Transparent);
-            canvas.DrawPicture(svgScript.Picture);
-        }
-
-        private void OnPaintSurfaceRemote(object sender, SKPaintSurfaceEventArgs e)
-        {
-            var canvas = e.Surface.Canvas;
-            canvas.Clear(SKColors.Transparent);
-            canvas.DrawPicture(svgRemote.Picture);
-        }
-
-        private void OnPaintSurfaceFolder(object sender, SKPaintSurfaceEventArgs e)
-        {
-            var canvas = e.Surface.Canvas;
-            canvas.Clear(SKColors.Transparent);
-            canvas.DrawPicture(svgFolder.Picture);
-        }
-
-        private void OnPaintSurfacePrograms(object sender, SKPaintSurfaceEventArgs e)
-        {
-            var canvas = e.Surface.Canvas;
-            canvas.Clear(SKColors.Transparent);
-            canvas.DrawPicture(svgPrograms.Picture);
-        }
-
-        private void OnPaintSurfaceServices(object sender, SKPaintSurfaceEventArgs e)
-        {
-            var canvas = e.Surface.Canvas;
-            canvas.Clear(SKColors.Transparent);
-            canvas.DrawPicture(svgServices.Picture);
-        }
-
-        private void OnPaintSurfaceTask(object sender, SKPaintSurfaceEventArgs e)
-        {
-            var canvas = e.Surface.Canvas;
-            canvas.Clear(SKColors.Transparent);
-            canvas.DrawPicture(svgTask.Picture);
-        }
-
-        private void OnPaintSurfaceEventLog(object sender, SKPaintSurfaceEventArgs e)
-        {
-            var canvas = e.Surface.Canvas;
-            canvas.Clear(SKColors.Transparent);
-            canvas.DrawPicture(svgEventLog.Picture);
-        }
-
+        /// <summary>
+        /// Obtiene la lista de controladores de dominio del dominio actual.
+        /// </summary>
+        /// <returns>Una lista con los nombres de los controladores de dominio.</returns>
         private List<string> ObtenerControladoresDeDominio()
         {
             List<string> controladores = new List<string>();
@@ -184,6 +131,11 @@ namespace PowerTool
             return controladores;
         }
 
+        /// <summary>
+        /// Realiza un ping a cada equipo en la lista para actualizar su estado (encendido/apagado).
+        /// </summary>
+        /// <param name="sender">El temporizador que activó el evento.</param>
+        /// <param name="e">Datos del evento Elapsed.</param>
         private void PingEquipos(object sender, ElapsedEventArgs e)
         {
             int tempOnlineCount = 0;
@@ -213,6 +165,11 @@ namespace PowerTool
             Dispatcher.Invoke(ActualizarEstadisticas);
         }
 
+        /// <summary>
+        /// Actualiza la lista de usuarios conectados o desconectados en cada equipo.
+        /// </summary>
+        /// <param name="sender">El temporizador que activó el evento.</param>
+        /// <param name="e">Datos del evento Elapsed.</param>
         private void ActualizarUsuarios(object sender, ElapsedEventArgs e)
         {
             int tempUsersOnlineCount = 0;
@@ -251,6 +208,9 @@ namespace PowerTool
             Dispatcher.Invoke(ActualizarEstadisticas);
         }
 
+        /// <summary>
+        /// Actualiza las estadísticas mostradas en la interfaz, como el número de equipos y usuarios conectados.
+        /// </summary>
         private void ActualizarEstadisticas()
         {
             OnlineCount.Text = onlineCount.ToString();
@@ -259,6 +219,11 @@ namespace PowerTool
             UsersOfflineCount.Text = usersOfflineCount.ToString();
         }
 
+        /// <summary>
+        /// Filtra la lista de equipos según el texto ingresado en el cuadro de búsqueda.
+        /// </summary>
+        /// <param name="item">El equipo a evaluar.</param>
+        /// <returns>True si el equipo coincide con el filtro, de lo contrario, false.</returns>
         private bool EquipoFilter(object item)
         {
             if (string.IsNullOrWhiteSpace(SearchBox.Text))
@@ -267,6 +232,10 @@ namespace PowerTool
             return (item as Equipo).Name.IndexOf(SearchBox.Text, StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
+        /// <summary>
+        /// Carga la lista de equipos del dominio seleccionado.
+        /// </summary>
+        /// <param name="selectedDomain">Información del dominio seleccionado.</param>
         private async void CargarEquiposDelDominio(DomainInfo selectedDomain)
         {
             try
@@ -333,6 +302,11 @@ namespace PowerTool
             }
         }
 
+        /// <summary>
+        /// Determina si un equipo está encendido mediante un ping.
+        /// </summary>
+        /// <param name="nombreEquipo">Nombre del equipo a verificar.</param>
+        /// <returns>True si el equipo responde al ping, de lo contrario, false.</returns>
         private bool EstaEncendido(string nombreEquipo)
         {
             try
@@ -348,6 +322,12 @@ namespace PowerTool
             }
         }
 
+        /// <summary>
+        /// Obtiene el nombre del usuario actual conectado a un equipo.
+        /// </summary>
+        /// <param name="nombreEquipo">Nombre del equipo remoto.</param>
+        /// <param name="selectedDomain">Información del dominio.</param>
+        /// <returns>El nombre del usuario actual, o "N/A" si no se encuentra.</returns>
         private string ObtenerUsuarioActual(string nombreEquipo, DomainInfo selectedDomain)
         {
             try
@@ -377,6 +357,12 @@ namespace PowerTool
             return "N/A";
         }
 
+        /// <summary>
+        /// Obtiene la dirección IP y la dirección MAC de un equipo remoto.
+        /// </summary>
+        /// <param name="nombreEquipo">Nombre del equipo remoto.</param>
+        /// <param name="selectedDomain">Información del dominio.</param>
+        /// <returns>Tupla con la dirección IP y MAC del equipo.</returns>
         private (string ipAddress, string macAddress) ObtenerIPyMAC(string nombreEquipo, DomainInfo selectedDomain)
         {
             try
@@ -409,6 +395,12 @@ namespace PowerTool
             return ("N/A", "N/A");
         }
 
+        /// <summary>
+        /// Obtiene la lista de programas instalados en un equipo remoto.
+        /// </summary>
+        /// <param name="nombreEquipo">Nombre del equipo remoto.</param>
+        /// <param name="selectedDomain">Información del dominio.</param>
+        /// <returns>Lista de programas instalados.</returns>
         private List<InstalledProgram> ObtenerProgramasInstalados(string nombreEquipo, DomainInfo selectedDomain)
         {
             List<InstalledProgram> programas = new List<InstalledProgram>();
@@ -471,6 +463,12 @@ namespace PowerTool
             return programas;
         }
 
+        /// <summary>
+        /// Obtiene la lista de servicios en ejecución en un equipo remoto.
+        /// </summary>
+        /// <param name="nombreEquipo">Nombre del equipo remoto.</param>
+        /// <param name="selectedDomain">Información del dominio.</param>
+        /// <returns>Lista de servicios en ejecución.</returns>
         private List<ServiceInfo> ObtenerServiciosEnEjecucion(string nombreEquipo, DomainInfo selectedDomain)
         {
             List<ServiceInfo> servicios = new List<ServiceInfo>();
@@ -508,6 +506,11 @@ namespace PowerTool
             return servicios;
         }
 
+        /// <summary>
+        /// Obtiene la lista de procesos en un equipo remoto.
+        /// </summary>
+        /// <param name="remoteMachineName">Nombre del equipo remoto.</param>
+        /// <returns>Colección observable de procesos remotos.</returns>
         public ObservableCollection<RemoteProcess> ObtenerProcesosRemotos(string remoteMachineName)
         {
             ObservableCollection<RemoteProcess> procesos = new ObservableCollection<RemoteProcess>();
@@ -552,6 +555,11 @@ namespace PowerTool
             return procesos;
         }
 
+        /// <summary>
+        /// Termina un proceso específico en un equipo remoto.
+        /// </summary>
+        /// <param name="remoteMachineName">Nombre del equipo remoto.</param>
+        /// <param name="processId">ID del proceso a terminar.</param>
         public void TerminarProcesoRemoto(string remoteMachineName, int processId)
         {
             try
@@ -569,6 +577,12 @@ namespace PowerTool
             }
         }
 
+        /// <summary>
+        /// Crea un scope de conexión WMI con un equipo remoto.
+        /// </summary>
+        /// <param name="remoteMachineName">Nombre del equipo remoto.</param>
+        /// <param name="decryptedPassword">Contraseña desencriptada para la conexión.</param>
+        /// <returns>Un ManagementScope conectado al equipo remoto.</returns>
         private ManagementScope CrearScope(string remoteMachineName, string decryptedPassword)
         {
             var options = new ConnectionOptions
@@ -603,6 +617,13 @@ namespace PowerTool
             return scope;
         }
 
+        /// <summary>
+        /// Obtiene los registros del visor de eventos de un equipo remoto dentro de un rango de fechas.
+        /// </summary>
+        /// <param name="nombreEquipo">Nombre del equipo remoto.</param>
+        /// <param name="startTime">Fecha y hora de inicio del rango.</param>
+        /// <param name="endTime">Fecha y hora de fin del rango.</param>
+        /// <returns>Lista de registros del visor de eventos.</returns>
         private List<RemoteEventLogEntry> ObtenerEventosRemotos(string nombreEquipo, DateTime startTime, DateTime endTime)
         {
             List<RemoteEventLogEntry> eventos = new List<RemoteEventLogEntry>();
@@ -646,6 +667,10 @@ namespace PowerTool
             return eventos;
         }
 
+        /// <summary>
+        /// Transfiere un archivo de instalación a un equipo remoto y ejecuta la instalación.
+        /// </summary>
+        /// <param name="equipoSeleccionado">Equipo remoto donde se transferirá e instalará el archivo.</param>
         private void TransferirEInstalarArchivo(Equipo equipoSeleccionado)
         {
             // Seleccionar archivo local
@@ -767,6 +792,12 @@ namespace PowerTool
             }
         }
 
+        /// <summary>
+        /// Obtiene la fecha y hora del último inicio de sesión de un equipo en uno de los controladores de dominio.
+        /// </summary>
+        /// <param name="nombreEquipo">Nombre del equipo remoto.</param>
+        /// <param name="controladoresDeDominio">Lista de controladores de dominio.</param>
+        /// <returns>Fecha y hora del último inicio de sesión.</returns>
         private async Task<DateTime> ObtenerUltimoInicioSesion(string nombreEquipo, List<string> controladoresDeDominio)
         {
             DateTime ultimoInicioSesion = DateTime.MinValue;
@@ -822,6 +853,12 @@ namespace PowerTool
             return ultimoInicioSesion;
         }
 
+        /// <summary>
+        /// Obtiene el inventario de hardware de una lista de equipos de forma asíncrona.
+        /// Incluye información sobre CPU, RAM y espacio en disco.
+        /// </summary>
+        /// <param name="equipos">Lista de equipos para obtener el inventario de hardware.</param>
+        /// <returns>Colección observable de información de hardware.</returns>
         public async Task<ObservableCollection<HardwareInfo>> ObtenerInventarioHardwareAsync(List<Equipo> equipos)
         {
             var inventario = new ObservableCollection<HardwareInfo>();
@@ -892,6 +929,11 @@ namespace PowerTool
             return inventario;
         }
 
+        /// <summary>
+        /// Maneja la apertura del menú contextual en la lista de equipos, configurando el equipo seleccionado como DataContext.
+        /// </summary>
+        /// <param name="sender">El ListView que activó el evento.</param>
+        /// <param name="e">Datos del evento ContextMenuOpening.</param>
         private void EquiposListView_ContextMenuOpening(object sender, ContextMenuEventArgs e)
         {
             if (EquiposListView.SelectedItem is Equipo equipoSeleccionado)
@@ -907,6 +949,105 @@ namespace PowerTool
             }
         }
 
+        /// <summary>
+        /// Filtra los equipos mostrados en la lista en función del texto ingresado en el cuadro de búsqueda.
+        /// </summary>
+        /// <param name="sender">El cuadro de búsqueda que activó el evento.</param>
+        /// <param name="e">Datos del evento TextChanged.</param>
+        private void SearchBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        {
+            CollectionViewSource.GetDefaultView(EquiposListView.ItemsSource).Refresh();
+        }
+
+        /// <summary>
+        /// Renderiza diferentes iconos SVG en un contexto de SkiaSharp. 
+        /// Cada función está asociada a un ícono específico y es invocada por el evento PaintSurface de SKElement.
+        /// </summary>
+        /// <param name="sender">El elemento SKElement que activa el evento.</param>
+        /// <param name="e">Datos del evento PaintSurface que contienen el contexto de renderizado.</param>
+        /// // Funciones:
+        // - OnPaintSurface: Renderiza el ícono del equipo (svgComputer).
+        // - OnPaintSurfaceScript: Renderiza el ícono de script (svgScript).
+        // - OnPaintSurfaceRemote: Renderiza el ícono de conexión remota (svgRemote).
+        // - OnPaintSurfaceFolder: Renderiza el ícono de carpeta (svgFolder).
+        // - OnPaintSurfacePrograms: Renderiza el ícono de programas instalados (svgPrograms).
+        // - OnPaintSurfaceServices: Renderiza el ícono de servicios (svgServices).
+        // - OnPaintSurfaceTask: Renderiza el ícono del administrador de tareas (svgTask).
+        // - OnPaintSurfaceEventLog: Renderiza el ícono del visor de eventos (svgEventLog).
+        private void OnPaintSurface(object sender, SKPaintSurfaceEventArgs e)
+        {
+            var canvas = e.Surface.Canvas;
+            canvas.Clear(SKColors.Transparent);
+            canvas.DrawPicture(svgComputer.Picture);
+        }
+
+        private void OnPaintSurfaceScript(object sender, SKPaintSurfaceEventArgs e)
+        {
+            var canvas = e.Surface.Canvas;
+            canvas.Clear(SKColors.Transparent);
+            canvas.DrawPicture(svgScript.Picture);
+        }
+
+        private void OnPaintSurfaceRemote(object sender, SKPaintSurfaceEventArgs e)
+        {
+            var canvas = e.Surface.Canvas;
+            canvas.Clear(SKColors.Transparent);
+            canvas.DrawPicture(svgRemote.Picture);
+        }
+
+        private void OnPaintSurfaceFolder(object sender, SKPaintSurfaceEventArgs e)
+        {
+            var canvas = e.Surface.Canvas;
+            canvas.Clear(SKColors.Transparent);
+            canvas.DrawPicture(svgFolder.Picture);
+        }
+
+        private void OnPaintSurfacePrograms(object sender, SKPaintSurfaceEventArgs e)
+        {
+            var canvas = e.Surface.Canvas;
+            canvas.Clear(SKColors.Transparent);
+            canvas.DrawPicture(svgPrograms.Picture);
+        }
+
+        private void OnPaintSurfaceServices(object sender, SKPaintSurfaceEventArgs e)
+        {
+            var canvas = e.Surface.Canvas;
+            canvas.Clear(SKColors.Transparent);
+            canvas.DrawPicture(svgServices.Picture);
+        }
+
+        private void OnPaintSurfaceTask(object sender, SKPaintSurfaceEventArgs e)
+        {
+            var canvas = e.Surface.Canvas;
+            canvas.Clear(SKColors.Transparent);
+            canvas.DrawPicture(svgTask.Picture);
+        }
+
+        private void OnPaintSurfaceEventLog(object sender, SKPaintSurfaceEventArgs e)
+        {
+            var canvas = e.Surface.Canvas;
+            canvas.Clear(SKColors.Transparent);
+            canvas.DrawPicture(svgEventLog.Picture);
+        }
+
+        /// <summary>
+        /// Maneja acciones específicas para un equipo seleccionado en la lista.
+        /// Cada función se asocia a un elemento del menú contextual o botón y ejecuta una operación remota o abre una ventana.
+        /// </summary>
+        /// <param name="sender">El elemento que activa el evento.</param>
+        /// <param name="e">Datos del evento que incluyen información contextual.</param>
+        // Funciones:
+        // - AbrirExploradorArchivos_Click: Abre el sistema de archivos del equipo seleccionado.
+        // - AbrirPopUpComando_Click: Muestra un pop-up para ejecutar comandos en el equipo seleccionado.
+        // - ConectarRDPButton_Click: Establece una conexión de escritorio remoto (RDP) con el equipo seleccionado.
+        // - VerProgramasInstalados_Click: Muestra una lista de programas instalados en el equipo seleccionado.
+        // - VerServiciosEnEjecucion_Click: Muestra una lista de servicios en ejecución en el equipo seleccionado.
+        // - RemoteTaskManager_Click: Abre el Administrador de Tareas Remoto para el equipo seleccionado.
+        // - OpenRemoteEventLog_Click: Muestra el visor de eventos del equipo seleccionado.
+        // - TransferirEInstalarArchivo_Click: Transfiere e instala un archivo en el equipo seleccionado.
+        // - OpenUserManagementWindow_Click: Abre la ventana de gestión de usuarios para el dominio seleccionado.
+        // - VerInventarioHardware_Click: Muestra el inventario de hardware de los equipos del dominio.
+        // - CerrarButton_Click: Cierra la aplicación.
         private void AbrirExploradorArchivos_Click(object sender, RoutedEventArgs e)
         {
             if ((sender as MenuItem)?.DataContext is Equipo equipoSeleccionado)

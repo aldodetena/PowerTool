@@ -1,5 +1,8 @@
 namespace PowerTool.Models
 {
+    /// <summary>
+    /// Contiene información sobre el hardware de un equipo, como la CPU, RAM, y espacio en disco.
+    /// </summary>
     public class HardwareInfo
     {
         public string? MachineName { get; set; }

@@ -5,8 +5,17 @@ using PowerTool.Utilities; // Importar tu modelo de datos si es necesario
 
 namespace PowerTool.Services
 {
+    /// <summary>
+    /// Proporciona funcionalidad para ejecutar comandos en equipos remotos utilizando PowerShell y WinRM.
+    /// </summary>
     public static class RemoteCommandService
     {
+        /// <summary>
+        /// Ejecuta un comando de PowerShell en un equipo remoto y devuelve el resultado.
+        /// </summary>
+        /// <param name="equipo">El equipo remoto en el que se ejecutará el comando.</param>
+        /// <param name="comando">El comando de PowerShell a ejecutar.</param>
+        /// <returns>El resultado del comando, o un mensaje de error si la ejecución falla.</returns>
         public static string EjecutarComandoRemoto(Equipo equipo, string comando)
         {
             try
