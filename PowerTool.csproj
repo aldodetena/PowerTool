@@ -11,6 +11,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="computer.svg" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="computer.svg" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.PowerShell.Commands.Diagnostics" Version="7.4.5" />
     <PackageReference Include="Microsoft.PowerShell.Commands.Management" Version="7.4.5" />
     <PackageReference Include="Microsoft.PowerShell.Commands.Utility" Version="7.4.5" />

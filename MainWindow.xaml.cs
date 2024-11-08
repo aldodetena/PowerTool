@@ -18,6 +18,7 @@ using System.Windows.Media;
 using System.Timers;
 using Microsoft.Win32;
 using System.Management.Automation;
+using System.Reflection;
 
 namespace PowerTool
 {
@@ -52,15 +53,38 @@ namespace PowerTool
             usuarioTimer.Start();
 
             // Cargar los SVGs
-            try {
+            try
+            {
                 svgComputer = new SKSvg();
-                svgComputer.Load(Path.Combine("Icons", "computer.svg"));
+
+                // Obtiene el ensamblado actual
+                Assembly assembly = Assembly.GetExecutingAssembly();
+
+                // Lista de nombres de recursos para verificar el nombre correcto
+                string[] resourceNames = assembly.GetManifestResourceNames();
+
+                // Nombre completo del recurso incrustado
+                string resourceName = "PowerTool.computer.svg"; // Ajusta esto según tu espacio de nombres y ubicación del archivo
+
+                // Abre el recurso como un Stream
+                using (Stream stream = assembly.GetManifestResourceStream(resourceName))
+                {
+                    if (stream != null)
+                    {
+                        // Carga el SVG desde el Stream
+                        svgComputer.Load(stream);
+                    }
+                    else
+                    {
+                        Logger.LogError($"No se encontró el recurso incrustado: {resourceName}", null);
+                    }
+                }
             }
             catch (Exception ex)
             {
                 Logger.LogError("Error al cargar los SVG", ex);
             }
-            
+
 
             equipos = new ObservableCollection<Equipo>();
             EquiposListView.ItemsSource = equipos;
