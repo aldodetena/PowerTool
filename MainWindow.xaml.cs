@@ -24,13 +24,6 @@ namespace PowerTool
     public partial class MainWindow : Window
     {
         private readonly SKSvg svgComputer;
-        private readonly SKSvg svgScript;
-        private readonly SKSvg svgRemote;
-        private readonly SKSvg svgFolder;
-        private readonly SKSvg svgPrograms;
-        private readonly SKSvg svgServices;
-        private readonly SKSvg svgEventLog;
-        private readonly SKSvg svgTask;
         private readonly object equiposLock = new object();
         private ObservableCollection<Equipo> equipos;
         private System.Timers.Timer pingTimer;
@@ -62,27 +55,6 @@ namespace PowerTool
             try {
                 svgComputer = new SKSvg();
                 svgComputer.Load(Path.Combine("Icons", "computer.svg"));
-
-                svgScript = new SKSvg();
-                svgScript.Load(Path.Combine("Icons", "script.svg"));
-
-                svgRemote = new SKSvg();
-                svgRemote.Load(Path.Combine("Icons", "remote.svg"));
-
-                svgFolder = new SKSvg();
-                svgFolder.Load(Path.Combine("Icons", "folder.svg"));
-
-                svgPrograms = new SKSvg();
-                svgPrograms.Load(Path.Combine("Icons", "programs.svg"));
-
-                svgServices = new SKSvg();
-                svgServices.Load(Path.Combine("Icons", "services.svg"));
-
-                svgEventLog = new SKSvg();
-                svgEventLog.Load(Path.Combine("Icons", "services.svg"));
-
-                svgTask = new SKSvg();
-                svgTask.Load(Path.Combine("Icons", "services.svg"));
             }
             catch (Exception ex)
             {
@@ -965,69 +937,11 @@ namespace PowerTool
         /// </summary>
         /// <param name="sender">El elemento SKElement que activa el evento.</param>
         /// <param name="e">Datos del evento PaintSurface que contienen el contexto de renderizado.</param>
-        /// // Funciones:
-        // - OnPaintSurface: Renderiza el ícono del equipo (svgComputer).
-        // - OnPaintSurfaceScript: Renderiza el ícono de script (svgScript).
-        // - OnPaintSurfaceRemote: Renderiza el ícono de conexión remota (svgRemote).
-        // - OnPaintSurfaceFolder: Renderiza el ícono de carpeta (svgFolder).
-        // - OnPaintSurfacePrograms: Renderiza el ícono de programas instalados (svgPrograms).
-        // - OnPaintSurfaceServices: Renderiza el ícono de servicios (svgServices).
-        // - OnPaintSurfaceTask: Renderiza el ícono del administrador de tareas (svgTask).
-        // - OnPaintSurfaceEventLog: Renderiza el ícono del visor de eventos (svgEventLog).
         private void OnPaintSurface(object sender, SKPaintSurfaceEventArgs e)
         {
             var canvas = e.Surface.Canvas;
             canvas.Clear(SKColors.Transparent);
             canvas.DrawPicture(svgComputer.Picture);
-        }
-
-        private void OnPaintSurfaceScript(object sender, SKPaintSurfaceEventArgs e)
-        {
-            var canvas = e.Surface.Canvas;
-            canvas.Clear(SKColors.Transparent);
-            canvas.DrawPicture(svgScript.Picture);
-        }
-
-        private void OnPaintSurfaceRemote(object sender, SKPaintSurfaceEventArgs e)
-        {
-            var canvas = e.Surface.Canvas;
-            canvas.Clear(SKColors.Transparent);
-            canvas.DrawPicture(svgRemote.Picture);
-        }
-
-        private void OnPaintSurfaceFolder(object sender, SKPaintSurfaceEventArgs e)
-        {
-            var canvas = e.Surface.Canvas;
-            canvas.Clear(SKColors.Transparent);
-            canvas.DrawPicture(svgFolder.Picture);
-        }
-
-        private void OnPaintSurfacePrograms(object sender, SKPaintSurfaceEventArgs e)
-        {
-            var canvas = e.Surface.Canvas;
-            canvas.Clear(SKColors.Transparent);
-            canvas.DrawPicture(svgPrograms.Picture);
-        }
-
-        private void OnPaintSurfaceServices(object sender, SKPaintSurfaceEventArgs e)
-        {
-            var canvas = e.Surface.Canvas;
-            canvas.Clear(SKColors.Transparent);
-            canvas.DrawPicture(svgServices.Picture);
-        }
-
-        private void OnPaintSurfaceTask(object sender, SKPaintSurfaceEventArgs e)
-        {
-            var canvas = e.Surface.Canvas;
-            canvas.Clear(SKColors.Transparent);
-            canvas.DrawPicture(svgTask.Picture);
-        }
-
-        private void OnPaintSurfaceEventLog(object sender, SKPaintSurfaceEventArgs e)
-        {
-            var canvas = e.Surface.Canvas;
-            canvas.Clear(SKColors.Transparent);
-            canvas.DrawPicture(svgEventLog.Picture);
         }
 
         /// <summary>
