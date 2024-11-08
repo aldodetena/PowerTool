@@ -47,7 +47,7 @@
 
 ### Requisitos
 - **Windows 10/11** o **Windows Server** con soporte para .NET.
-- **.NET SDK 7.0** o superior.
+- **.NET SDK 8.0** o superior.
 - Acceso a un dominio de Active Directory.
 
 ### Configuración Inicial
